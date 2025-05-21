@@ -31,3 +31,4 @@ public class Expense {
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
 }
+
