@@ -10,4 +10,5 @@ public interface CategoryService {
     public Category deleteCategory();
     public List<Category> getAllCategory();
     public List<Category> getCategoryByUserId(Long id);
+    public String getAllCategoryForUser(Long chatId);
 }

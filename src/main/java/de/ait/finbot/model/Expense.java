@@ -24,6 +24,9 @@ public class Expense {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
     @Column(name = "amount")
     private BigDecimal amount;
     @Column(name = "note")
