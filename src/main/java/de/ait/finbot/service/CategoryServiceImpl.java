@@ -2,6 +2,7 @@ package de.ait.finbot.service;
 
 import de.ait.finbot.mapper.CategoryMapper;
 import de.ait.finbot.model.Category;
+import de.ait.finbot.model.User;
 import de.ait.finbot.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -16,6 +18,7 @@ import java.util.List;
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+    private final UserService userService;
 
     @Override
     public boolean init() {
@@ -61,5 +64,18 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<Category> getCategoryByUserId(Long userId) {
         return categoryRepository.findAllByUser_Id(userId);
+    }
+
+    @Override
+    public String getAllCategoryForUser(Long chatId) {
+        User userByChatId = userService.getUserByChatId(chatId);
+        userByChatId.getId();
+        List<Category> resultCategory = getCategoryByUserId(null);
+        List<Category> categoryByUserId = getCategoryByUserId(userByChatId.getId());
+        resultCategory.addAll(categoryByUserId);
+        String category = resultCategory.stream()
+                .map(Category::getName)
+                .collect(Collectors.joining("\n"));
+        return category;
     }
 }
