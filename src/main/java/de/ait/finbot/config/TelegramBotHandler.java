@@ -122,7 +122,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
 
                 String collect1 = expenseService.findAllExpenseByUser_Id(user.getId())
                         .stream()
-                        .map(expense -> "<b>" + expense.getNote() + "</b>" + ": " + expense.getAmount() + ". Дата: " + expense.getCreatedAt().getDayOfMonth() + " " + expense.getCreatedAt().getMonth() + " " + expense.getCreatedAt().getYear())
+                        .map(expense -> "<b>" + expense.getNote() + "</b>" + ": " + expense.getAmount() + ". <b>Дата:</b> " + expense.getCreatedAt().getDayOfMonth() + " " + expense.getCreatedAt().getMonth() + " " + expense.getCreatedAt().getYear())
                         .collect(Collectors.joining("\n"));
 
 
