@@ -27,12 +27,12 @@ public class ExpenseMapper {
 
     public Expense chatIdAndNoteToExpense(Long chatId, String note){
 
-        String namesExpense = Arrays.stream(note.split("\\d+")).
+        String namesExpense = Arrays.stream(note.split("\\d+[.,]?")).
                 toList().
                 stream()
                 .collect(Collectors.joining("")).trim();
 
-        String amountString = Arrays.stream(note.split("\\D+"))
+        String amountString = Arrays.stream(note.split("[^0-9.,]"))
                 .toList()
                 .stream()
                 .collect(Collectors.joining("")).trim();
@@ -45,10 +45,13 @@ public class ExpenseMapper {
 
         User user = userService.getUserByChatId(chatId);
         Expense expense = new Expense();
-        expense.setNote(note);
         expense.setUser(user);
         expense.setAmount(amount);
-        expense.setNote(namesExpense);
+        if(namesExpense.isBlank()){
+            expense.setNote("Без названия");
+        } else {
+            expense.setNote(namesExpense);
+        }
         Category category = new Category();
         for (String s : namesExpenseSplit){
             if(productRepository.PRODUCTS.contains(s)){
