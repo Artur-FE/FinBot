@@ -13,4 +13,7 @@ public interface ExpenseService {
     public Expense addExpense(Expense expense);
     public boolean removeExpenseById(Long id);
     public Expense findExpenseByNote(String name);
+    public String findAllExpenseByChatId(Long chatId);
+    public String findExpenseFor7DayByChatId(Long chatId);
+    public String findExpenseForToDayByChatId(Long chatId);
 }
