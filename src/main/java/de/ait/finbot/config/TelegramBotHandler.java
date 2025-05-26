@@ -57,7 +57,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             "\uD83D\uDCCB Посмотреть список трат /my_expenses\n" +
             "⚙\uFE0F Настроить категории и валюту /settings\n" +
             "\n" +
-            "Начнём? Выбери действие из меню ниже ⬇\uFE0F";
+            "Начнём? Выбери действие ниже ⬇\uFE0F";
 
 
     public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, KeyBoard keyBoard) {

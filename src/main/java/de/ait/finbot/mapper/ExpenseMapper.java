@@ -54,16 +54,16 @@ public class ExpenseMapper {
         }
         Category category = new Category();
         for (String s : namesExpenseSplit){
-            if(productRepository.PRODUCTS.contains(s)){
+            if(productRepository.PRODUCTS.contains(s.toLowerCase())){
                 category.setId(1L);
                 category.setName("Продукты");
-            } else if(transportRepository.TRANSPORT.contains(s)){
+            } else if(transportRepository.TRANSPORT.contains(s.toLowerCase())){
                 category.setId(2L);
                 category.setName("Транспорт");
-            } else if (publicUtilitiesRepository.PUBLICUTILITIES.contains(s)) {
+            } else if (publicUtilitiesRepository.PUBLICUTILITIES.contains(s.toLowerCase())) {
                 category.setId(3L);
                 category.setName("Коммунальные услуги");
-            } else if (entertainment.ENTERTAINMENT.contains(s)) {
+            } else if (entertainment.ENTERTAINMENT.contains(s.toLowerCase())) {
                 category.setId(4L);
                 category.setName("Развлечения");
             } else {
