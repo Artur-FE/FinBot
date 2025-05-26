@@ -9,6 +9,7 @@ import de.ait.finbot.repository.PublicUtilitiesRepository;
 import de.ait.finbot.repository.TransportRepository;
 import de.ait.finbot.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExpenseMapper {
@@ -36,9 +38,16 @@ public class ExpenseMapper {
                 .toList()
                 .stream()
                 .collect(Collectors.joining("")).trim();
+        log.info(amountString);
 
         String[] namesExpenseSplit = namesExpense.split(" ");
-        BigDecimal amount = new BigDecimal(amountString);
+        BigDecimal amount;
+        if(amountString.isBlank()) {
+            amount = new BigDecimal("0");
+        } else {
+            amount = new BigDecimal(amountString);
+        }
+        log.info(String.valueOf(amount));
         System.out.println("имя расхода" + namesExpense);
         System.out.println("величина расхода" + amount);
 
@@ -47,6 +56,7 @@ public class ExpenseMapper {
         Expense expense = new Expense();
         expense.setUser(user);
         expense.setAmount(amount);
+        expense.setActive(true);
         if(namesExpense.isBlank()){
             expense.setNote("Без названия");
         } else {
@@ -76,4 +86,27 @@ public class ExpenseMapper {
         expense.setCreatedAt(LocalDateTime.now());
        return expense;
     }
+
+    public String expenseToExpenseString(Expense expense) {
+
+        String expenseToList = "<b>ID:</b> " + expense.getId() + ". <b>" + expense.getNote() + "</b>" + ": " +
+                expense.getAmount() + ". <b>Дата:</b> " +
+                expense.getCreatedAt().getDayOfMonth() + "." +
+                String.format("%02d", expense.getCreatedAt().getMonthValue()) + "." +
+                expense.getCreatedAt().getYear();
+        return expenseToList;
+    }
+
+    public String expenseToExpenseStringAllField(Expense expense) {
+
+        String expenseToList = "<b>ID:</b> " + expense.getId() +
+                "\n<b>Имя: </b>" + expense.getNote() +
+                "\n<b>Сумма: </b>" + expense.getAmount() +
+                "\n<b>Категория: </b>" + expense.getCategory().getName() +
+                "\n<b>Дата:</b> " + expense.getCreatedAt().getDayOfMonth() + "." +
+                String.format("%02d", expense.getCreatedAt().getMonthValue()) + "." +
+                expense.getCreatedAt().getYear();
+        return expenseToList;
+    }
+
 }

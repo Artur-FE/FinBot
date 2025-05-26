@@ -33,5 +33,7 @@ public class Expense {
     private String note;
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
+    @Column(name="isActive")
+    private boolean isActive;
 }
 

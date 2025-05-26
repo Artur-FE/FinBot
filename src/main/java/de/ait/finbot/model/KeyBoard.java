@@ -37,6 +37,47 @@ public class KeyBoard {
         row.add("Все мои расходы");
         row.add("Добавить расход");
         keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Редактировать расходы");
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup editExpenseKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("Редактировать расход по имени");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Редактировать расход по ID");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Удалить расход по имени");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Удалить по ID");
+        row.add("Удалить все расходы");
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup editExpenseByIdKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("Изменить название");
+        row.add("Изменить сумму");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Изменить дату");
+        row.add("Удалить расход");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Вернуться в главное меню");
+        keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
         return replyKeyboardMarkup;
