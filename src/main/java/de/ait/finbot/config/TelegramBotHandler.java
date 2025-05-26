@@ -3,38 +3,28 @@ package de.ait.finbot.config;
 import de.ait.finbot.mapper.ExpenseMapper;
 import de.ait.finbot.mapper.UserMapper;
 import de.ait.finbot.model.*;
-import de.ait.finbot.repository.CategoryRepository;
 import de.ait.finbot.service.CategoryService;
 import de.ait.finbot.service.ExpenseService;
 import de.ait.finbot.service.UserServiceImpl;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -49,14 +39,17 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     private final String token;
     private final KeyBoard keyBoard;
     private final Map<Long, StatusMessage> statusMessageMap = new HashMap<>();
+    private final Map<Long, Expense> expenseMap = new HashMap<>();
     public final String INFO = "Я — твой помощник по учёту расходов.\n" +
             "С помощью меня ты сможешь быстро записывать траты, следить за своими расходами и управлять своими финансами прямо здесь, в Telegram.\n" +
             "\n" +
             "Вот что я умею:\n" +
             "➕ Добавить расходы /add_expense\n" +
-            "\uD83D\uDCCB Посмотреть список трат /my_expenses\n" +
-            "⚙\uFE0F Настроить категории и валюту /settings\n" +
-            "\n" +
+            "\uD83D\uDCCB Посмотреть список расходов /my_expenses\n" +
+            "\uD83D\uDCC1 Посмотреть список категорий расходов /category \n" +
+            "➕ Добавить категорию расходов /add_category\"\n" +
+    // "⚙\uFE0F Настроить категории и валюту /settings\n" +
+     //       "\n" +
             "Начнём? Выбери действие ниже ⬇\uFE0F";
 
 
@@ -114,13 +107,14 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
                 startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
             }
             else if (messageText.equals("/info") || messageText.equals("Информация о боте") ) {
-                sendMessage(chatId, INFO);
+                sendMessage(chatId, INFO, keyBoard.startKeyboard());
             }
             else if (messageText.equals("/category")) {
                 getAllCategoryForUser(chatId);
             }
             else if (messageText.equals("/my_expenses") || messageText.equals("Мои расходы")) {
-                sendMessage(chatId, "Выберите из меню ниже период, за который необходимо вывести расходы ⬇\uFE0F", true);
+                sendMessage(chatId, "Выберите ниже период, за который необходимо вывести расходы ⬇\uFE0F",
+                        keyBoard.startExpenseKeyboard(), true);
 
             } else if (messageText.equals("Мои расходы за сегодня")) {
                 getAllExpensesForToDayForUser(chatId);
@@ -139,27 +133,95 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             }
             else if (StatusMessage.WAITING_CATEGORY.equals(statusMessageMap.get(chatId))) {
                 putCategory(chatId, messageText);
+            } else if(messageText.equals("Редактировать расходы")){
+                sendMessage(chatId, "Выберите ниже необходимое действие ⬇\uFE0F", keyBoard.editExpenseKeyboard(), false);
+            } else if (messageText.equals("Удалить по ID")) {
+                waitingIDForExpenseToDelete(chatId);
+            } else if (StatusMessage.WAITING_ID_TO_DELETE.equals(statusMessageMap.get(chatId))) {
+                Long idExpense = Long.valueOf(messageText);
+                deleteExpenseById(chatId, idExpense);
+            } else if (messageText.equals("Редактировать расход по ID")) {
+                waitingIDForExpenseToEdit(chatId);
+            }  else if (StatusMessage.WAITING_ID_TO_EDIT.equals(statusMessageMap.get(chatId))) {
+                editExpenseById(chatId, messageText);
+            } else if (StatusMessage.WAITING_NEW_NAME_EXPENSE_TO_EDIT.equals(statusMessageMap.get(chatId))) {
+               editNameExpenseById(chatId);
             }
-            else {
+             else if (StatusMessage.PUT_NEW_NAME_EXPENSE.equals(statusMessageMap.get(chatId))) {
+                putNewNameExpenseById(chatId, messageText);
+            } else {
                 sendMessage(chatId, "Извините, пока не могу обработать данную команду");
                 // log.error("chatId " + chatId + " ошибка");
             }
         }
     }
 
+    private void putNewNameExpenseById(long chatId, String newNameExpense) {
+       Expense expense = expenseMap.get(chatId);
+       expense.setNote(newNameExpense);
+       expenseService.addExpense(expense);
+       expenseMap.remove(chatId);
+       sendMessage(chatId, "Имя расхода успешно изменено!" + "\n" + expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.startKeyboard(), true);
+       statusMessageMap.remove(chatId);
+    }
+
+    private void editNameExpenseById(long chatId) {
+        sendMessage(chatId, "Введите новое название расхода");
+        statusMessageMap.remove(chatId);
+        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_NAME_EXPENSE);
+    }
+
+    private void editExpenseById(long chatId, String idExpenseString) {
+        Long idExpense = null;
+        try {
+            idExpense = Long.valueOf(idExpenseString);
+            Expense expense = expenseService.findExpenseById(idExpense);
+            expenseMap.put(chatId, expense);
+            sendMessage(chatId, "Найден расход: \n" +
+                    expenseMapper.expenseToExpenseStringAllField(expense),
+                    keyBoard.editExpenseByIdKeyboard(), true);
+         statusMessageMap.remove(chatId);
+         statusMessageMap.put(chatId, StatusMessage.WAITING_NEW_NAME_EXPENSE_TO_EDIT);
+
+        } catch (Exception e) {
+            sendMessage(chatId, "Некорректно передан ID. " +
+                            "Вводите только цифры, например 15. Попробуйте еще раз!",
+                    true);
+        }
+    }
+
+    private void waitingIDForExpenseToEdit(long chatId) {
+        sendMessage(chatId, "Введите ID расхода для редактирования", keyBoard.editExpenseKeyboard(), false);
+        statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_EDIT);
+    }
+
+    private void deleteExpenseById(long chatId, Long idExpense) {
+       try {
+           Expense expense = expenseService.removeExpenseById(idExpense);
+           sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
+           statusMessageMap.remove(chatId);
+       } catch (RuntimeException e){
+           sendMessage(chatId, "Расход по указанному ID " +idExpense +" " +
+                   "не найден! Проверьте правильность введения", true);
+
+       }
+       }
+
+    private void waitingIDForExpenseToDelete(long chatId) {
+        sendMessage(chatId, "Введите ID расхода для удаления (только цифры), например 24", keyBoard.startExpenseKeyboard());
+        statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_DELETE);
+    }
+
     private void getAllExpensesFor7DayForUser(long chatId) {
-        sendMessage(chatId, expenseService.findExpenseFor7DayByChatId(chatId), true);
+        sendMessage(chatId, expenseService.findExpenseFor7DayByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
     }
     private void getAllExpensesForUser(long chatId) {
-        sendMessage(chatId, expenseService.findAllExpenseByChatId(chatId), true);
+        sendMessage(chatId, expenseService.findAllExpenseByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
     }
 
     private void getAllExpensesForToDayForUser(long chatId) {
-        sendMessage(chatId, expenseService.findExpenseForToDayByChatId(chatId), true);
+        sendMessage(chatId, expenseService.findExpenseForToDayByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
     }
-
-
-
 
     private void putCategory(long chatId, String messageText) {
         categoryService.addCategory(chatId, messageText);
@@ -181,20 +243,17 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         sendMessage(chatId, "Расход добавлен" + "\n" + "Сумма: "
                 + expenseAmount + "\n"+
                 "Название: " + expenseName + "\n"
-                + "Категория: " + nameCategory);
+                + "Категория: " + nameCategory, keyBoard.startExpenseKeyboard());
 
         System.out.println("Расход добавлен успешно " + expenseMapper.chatIdAndNoteToExpense(chatId, messageText));
         System.out.println(statusMessageMap.remove(chatId));
 
     }
 
-
-
-
     private void addExpense(long chatId) {
         sendMessage(chatId, "Введите сумму и примечание, чтобы я " +
                 "мог определить в какую категорию сохранить трату\n" +
-                "Например: 250 еда или 500 одежда");
+                "Например: 250 еда или 500 одежда", keyBoard.startExpenseKeyboard());
         statusMessageMap.put(chatId, StatusMessage.WAITING_EXPENSE);
     }
 
@@ -206,7 +265,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     private void startCommandReceived(long chatId, String name) {
         String answer = "\uD83D\uDC4B Привет " + name + ", приятно познакомиться";
         sendMessage(chatId, answer);
-        sendMessage(chatId, INFO);
+        sendMessage(chatId, INFO, keyBoard.startKeyboard());
         if (userService.getUserByChatId(chatId).getUserName() == null) {
             User user = userService.addUser(userMapper.chatIdAndNameToUser(chatId, name));
             System.out.println(user + " успешно добавлен в бд");
@@ -220,23 +279,67 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
 
     private void sendMessage(long chatId, String textToSend) {
         SendMessage sendMessage = new SendMessage(String.valueOf(chatId), textToSend);
-        sendMessage.setReplyMarkup(keyBoard.startKeyboard());
+        log.info(statusMessageMap.toString());
+        sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
+
         try {
             telegramClient.execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
+    private void sendMessageStartKeyBoard (long chatId, String textToSend) {
+        SendMessage sendMessage = new SendMessage(String.valueOf(chatId), textToSend);
+        sendMessage.setReplyMarkup(keyBoard.startKeyboard());
+        log.info(statusMessageMap.toString());
+        try {
+            telegramClient.execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+        }
+    }
+
 
 
     private void sendMessage(long chatId, String textToSend, boolean setParseModeHtml) {
         SendMessage sendMessage = new SendMessage(String.valueOf(chatId), textToSend);
             sendMessage.setParseMode("HTML");
-        sendMessage.setReplyMarkup(keyBoard.startExpenseKeyboard());
+       // sendMessage.setReplyMarkup(keyBoard.startExpenseKeyboard());
+        log.info(statusMessageMap.toString());
         try {
             telegramClient.execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
+            log.error(e.getMessage());
+        }
+    }
+
+    private void sendMessage(long chatId, String textToSend, ReplyKeyboardMarkup replyKeyboardMarkup, boolean setParseMode ) {
+        SendMessage sendMessage = new SendMessage(String.valueOf(chatId), textToSend);
+        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+        if(setParseMode){
+            sendMessage.setParseMode("HTML");
+        }
+        log.info(statusMessageMap.toString());
+        try {
+            telegramClient.execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+        }
+    }
+
+    private void sendMessage(long chatId, String textToSend, ReplyKeyboardMarkup replyKeyboardMarkup) {
+        SendMessage sendMessage = new SendMessage(String.valueOf(chatId), textToSend);
+        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+        log.info(statusMessageMap.toString());
+        try {
+            telegramClient.execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 }
