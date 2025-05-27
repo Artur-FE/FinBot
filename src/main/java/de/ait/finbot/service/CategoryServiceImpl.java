@@ -63,19 +63,33 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<Category> getCategoryByUserId(Long userId) {
-        return categoryRepository.findAllByUser_Id(userId);
+//        return categoryRepository.findAllByUser_Id(userId);
+        List<Category> resultCategory = categoryRepository.findAllByUser_Id(null);
+        List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId);
+        resultCategory.addAll(categoryByUserId);
+        return resultCategory;
+
     }
 
     @Override
     public String getAllCategoryForUser(Long chatId) {
         User userByChatId = userService.getUserByChatId(chatId);
         userByChatId.getId();
-        List<Category> resultCategory = getCategoryByUserId(null);
-        List<Category> categoryByUserId = getCategoryByUserId(userByChatId.getId());
-        resultCategory.addAll(categoryByUserId);
+
+//        List<Category> resultCategory = getCategoryByUserId(null);
+//        List<Category> categoryByUserId = getCategoryByUserId(userByChatId.getId());
+//        resultCategory.addAll(categoryByUserId);
+        List<Category> resultCategory = getCategoryByUserId(userByChatId.getId());
         String category = resultCategory.stream()
-                .map(Category::getName)
+                // .map(Category::getName)
+                .map(category1 -> "<b>ID: </b>" + category1.getId() + ". <b>Имя: </b>" + category1.getName())
                 .collect(Collectors.joining("\n"));
         return category;
+    }
+
+    @Override
+    public Category getCategoryById(Long categoryID) {
+
+        return categoryRepository.findCategoryById(categoryID);
     }
 }
