@@ -13,5 +13,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     public Category save(Category category);
     public List<Category> findAllByUser_Id(Long userId);
    // public Category save(List<Category> category);
+   public Category findCategoryById(Long categoryID);
 
 }

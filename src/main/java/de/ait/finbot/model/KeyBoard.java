@@ -72,11 +72,12 @@ public class KeyBoard {
         row.add("Изменить сумму");
         keyboardRowList.add(row);
         row = new KeyboardRow();
+        row.add("Изменить категорию");
         row.add("Изменить дату");
-        row.add("Удалить расход");
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Вернуться в главное меню");
+        row.add("Удалить расход");
+        row.add("В главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);

@@ -11,4 +11,5 @@ public interface CategoryService {
     public List<Category> getAllCategory();
     public List<Category> getCategoryByUserId(Long id);
     public String getAllCategoryForUser(Long chatId);
+    public Category getCategoryById(Long categoryID);
 }

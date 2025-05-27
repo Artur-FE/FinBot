@@ -130,7 +130,7 @@ public class ExpenseServiceImpl implements ExpenseService{
     @Override
     public Expense removeExpenseById(Long id) {
         Expense expense = expenseRepository.findById(id).get();
-
+        try {
             if (!expense.isActive()) {
                 throw new RuntimeException();
             } else {
@@ -138,6 +138,9 @@ public class ExpenseServiceImpl implements ExpenseService{
                 expenseRepository.save(expense);
                 return expense;
             }
+        } catch (RuntimeException e) {
+            throw new RuntimeException();
+        }
 
     }
 
