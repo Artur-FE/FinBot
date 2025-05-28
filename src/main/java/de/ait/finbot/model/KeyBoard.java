@@ -18,7 +18,15 @@ public class KeyBoard {
         row.add("Добавить расход");
         keyboardRowList.add(row);
         row = new KeyboardRow();
+        row.add("Найти расход");
+        row.add("Редактировать расходы");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Список категорий");
         row.add("Информация о боте");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -28,10 +36,8 @@ public class KeyBoard {
     public ReplyKeyboardMarkup startExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Мои расходы за сегодня");
-        keyboardRowList.add(row);
-        row = new KeyboardRow();
-        row.add("Мои расходы за последние 7 дней");
+        row.add("Расходы за сегодня");
+        row.add("Расходы за 7 дней");
         keyboardRowList.add(row);
         row = new KeyboardRow();
         row.add("Все мои расходы");
@@ -39,6 +45,7 @@ public class KeyBoard {
         keyboardRowList.add(row);
         row = new KeyboardRow();
         row.add("Редактировать расходы");
+        row.add("Вернуться в главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -48,17 +55,16 @@ public class KeyBoard {
     public ReplyKeyboardMarkup editExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Редактировать расход по имени");
+        row.add("Редактировать по имени");
+        row.add("Редактировать по ID");
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Редактировать расход по ID");
-        keyboardRowList.add(row);
-        row = new KeyboardRow();
-        row.add("Удалить расход по имени");
-        keyboardRowList.add(row);
-        row = new KeyboardRow();
+        row.add("Удалить по имени");
         row.add("Удалить по ID");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
         row.add("Удалить все расходы");
+        row.add("Вернуться в главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -78,6 +84,43 @@ public class KeyBoard {
         row = new KeyboardRow();
         row.add("Удалить расход");
         row.add("В главное меню");
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup deleteExpenseKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("Подтверждаю удаление расхода");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Отменить и выйти в главное меню");
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup backTotStartMenuKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("Вернуться в главное меню");
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup searchExpenseKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("Найти по имени");
+        row.add("Найти по ID");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Вернуться в главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
