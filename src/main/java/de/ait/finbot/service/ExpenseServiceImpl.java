@@ -51,6 +51,12 @@ public class ExpenseServiceImpl implements ExpenseService{
     }
 
     @Override
+    public List<Expense> findAllExpenseByNoteIgnoreCase(String name) {
+        return expenseRepository.findAllExpenseByNoteIgnoreCase(name);
+
+    }
+
+    @Override
     public String findAllExpenseByChatId(Long chatId) {
         User user = userService.getUserByChatId(chatId);
         System.out.println("Получен юсер " + user + user.getId() + user.getUserName());
