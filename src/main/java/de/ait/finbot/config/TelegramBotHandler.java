@@ -21,7 +21,6 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
@@ -113,7 +112,8 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
-            if (messageText.equals("/start") || messageText.equals("Вернуться в главное меню") || messageText.equals("В главное меню")) {
+            if (messageText.equals("/start") || messageText.equals("Вернуться в главное меню") || messageText.equals("В главное меню")
+            || messageText.equals("Главное меню") ) {
                 statusMessageMap.remove(chatId);
                 startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
                 sendMessage(chatId, update.getMessage().getChat().getFirstName() + ", ты в главном меню", keyBoard.startKeyboard());
@@ -151,7 +151,9 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
                 sendMessage(chatId, "Выберите ниже необходимое действие ⬇\uFE0F", keyBoard.editExpenseKeyboard(), false);
             } else if (messageText.equals("Удалить по ID")) {
                 waitingIDForExpenseToDelete(chatId);
-            } else if (StatusMessage.WAITING_ID_TO_DELETE.equals(statusMessageMap.get(chatId))) {
+            }  else if (messageText.equals("Удалить все расходы") || messageText.equals("Уверен! Удалить все расходы!")) {
+                deleteAllExpenseByUser(chatId, messageText);
+            }else if (StatusMessage.WAITING_ID_TO_DELETE.equals(statusMessageMap.get(chatId))) {
                 deleteExpenseById(chatId, messageText);
             } else if (messageText.equals("Редактировать по ID") || messageText.equals("Найти по ID")) {
                 waitingIDForExpenseToEdit(chatId);
@@ -196,6 +198,25 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         System.out.println(statusMessageMap);
     }
 
+    private void deleteAllExpenseByUser(long chatId, String messageText) {
+        if(messageText.equals("Удалить все расходы")) {
+            sendMessage(chatId, "Вы уверенны, что хотите удалить все свои расходы? Действие невозможно восстановить",
+                    keyBoard.deleteAllExpenseMenuKeyboard(), true);
+        } else if(messageText.equals("Уверен! Удалить все расходы!")) {
+            try{
+            expenseService.removeAllExpenseByUser(chatId);
+                sendMessage(chatId, "Удаление успешно! \n" +
+                                expenseService.findAllExpenseByChatId(chatId),
+                        keyBoard.startKeyboard(), true);
+            }
+            catch (Exception e) {
+                sendMessage(chatId, "Ошибка! Что-то пошло не так! Попробуйте вернуться в главное меню и повторить попытку",
+                        keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+            }
+        }
+
+    }
+
     private void searchExpense(long chatId) {
         sendMessage(chatId, "Как ты хочешь найти расход, по имени расхода или ID? Выбери в меню ниже",
                 keyBoard.searchExpenseKeyboard(), true);
@@ -203,11 +224,11 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     }
 
     private void deleteExpenseByName(long chatId, String nameExpense) {
-        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(nameExpense)
+        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
                 .stream()
                 .map(expense -> expenseMapper.expenseToExpenseString(expense))
                 .collect(Collectors.joining("\n"));
-        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(nameExpense)
+        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
                 .stream()
                 .filter(expense -> expense.getNote().equalsIgnoreCase(nameExpense))
                 .toList();
@@ -223,11 +244,11 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         else if(!allExpenseByChatId.isBlank()) {
             sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
                     "Введите ID расхода для дальнейшего удаления \n\n" +
-                    allExpenseByChatId, keyBoard.backTotStartMenuKeyboard(), true);
+                    allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
             statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_DELETE);
         } else {
             sendMessage(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
-                    "Проверьте правильность введения имени расхода", keyBoard.editExpenseKeyboard(), true);
+                    "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.editExpenseKeyboard(), true);
         }
     }
 
@@ -239,11 +260,11 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
 
     private void findExpenseByName(long chatId, String nameExpense) {
       //  User user = userService.getUserByChatId(chatId);
-        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(nameExpense)
+        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
                 .stream()
                 .map(expense -> expenseMapper.expenseToExpenseString(expense))
                 .collect(Collectors.joining("\n"));
-        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(nameExpense)
+        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
                 .stream()
                 .filter(expense -> expense.getNote().equalsIgnoreCase(nameExpense))
                 .toList();
@@ -259,11 +280,11 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         else if(!allExpenseByChatId.isBlank()) {
             sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
                     "Введите ID расхода для дальнейшего редактирования \n\n" +
-                    allExpenseByChatId, keyBoard.backTotStartMenuKeyboard(), true);
+                    allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
             statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_EDIT);
         } else {
             sendMessage(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
-                    "Проверьте правильность введения имени расхода", keyBoard.editExpenseKeyboard(), true);
+                    "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         }
     }
 
@@ -281,37 +302,41 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
 //            userId = expense.getUser().getId();
 //            List<Category> categoryByUserId = categoryService.getCategoryByUserId(userId);
            // if (categoryByUserId.stream().anyMatch(category -> category.getId().equals(Long.valueOf(categoryId)))) {
-            System.out.println("checkerService.isCategoryAvailableToUser(categoryId, expense) - " + checkerService.isCategoryAvailableToUser(categoryId, expense));
-            if (checkerService.isCategoryAvailableToUser(categoryId, expense)) {
+            //System.out.println("checkerService.isCategoryAvailableToUser(categoryId, expense) - " + checkerService.isCategoryAvailableToUser(categoryId, expense));
+//            if (checkerService.isCategoryAvailableToUser(categoryId, expense)) {
                 Category category = categoryService.getCategoryById(Long.valueOf(categoryId));
                 expense.setCategory(category);
                 expenseService.addExpense(expense);
                 sendMessage(chatId, "Категория изменена успешно!\n" +
                                 expenseMapper.expenseToExpenseStringAllField(expense),
-                        keyBoard.startKeyboard(), true);
+                        keyBoard.backToStartAndExpenseMenuKeyboard(), true);
                 expenseMap.remove(chatId);
                 statusMessageMap.remove(chatId);
-            } else {
-                sendMessage(chatId, "Введенная категория с ID " + categoryId +
-                        " не найдена. Введите ID категории из Вашего списка категорий ниже", true);
-                sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
-                        "\n" + categoryService.getAllCategoryForUser(chatId), true);
-            }
+//            } else {
+//                sendMessage(chatId, "Введенная категория с ID " + categoryId +
+//                        " не найдена. Введите ID категории из Вашего списка категорий ниже", true);
+//                sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
+//                        "\n" + categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//            }
         } catch (NumberFormatException e) {
             sendMessage(chatId, "Ошибка! Введен некорретный ID <b>" + categoryId +
-                    "</b>. Допустимы только цифры. Проверьте правильность написания", true);
+                    "</b>. Допустимы только цифры. Проверьте правильность написания", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
             log.error(String.valueOf(expense), categoryId);
         }  catch (Exception e) {
-            sendMessage(chatId, "Что-то пошло не так");
+            sendMessage(chatId, "Введенная категория с ID " + categoryId +
+                    " не найдена. Введите ID категории из Вашего списка категорий ниже", true);
+            sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
+                    "\n" + categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+
             log.error(String.valueOf(expense), categoryId);
         }
 
     }
 
     private void editCategoryExpenseById(long chatId) {
-        sendMessage(chatId, "Введите ID категории, которую хотите присвоить вашему расходу");
+        sendMessage(chatId, "Введите ID категории, которую хотите присвоить вашему расходу", keyBoard.backToStartAndExpenseMenuKeyboard());
         sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
-                "\n" + categoryService.getAllCategoryForUser(chatId), true);
+                "\n" + categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         statusMessageMap.put(chatId, StatusMessage.PUT_NEW_CATEGORY_EXPENSE);
 
     }
@@ -327,12 +352,12 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             expenseMap.remove(chatId);
             sendMessage(chatId, "Дата расхода успешно изменена!" + "\n" +
                             expenseMapper.expenseToExpenseStringAllField(expense),
-                    keyBoard.startKeyboard(), true);
+                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
             statusMessageMap.remove(chatId);
         } catch (Exception e) {
             log.error(e.getMessage() + "Ошибка. Новая дата некорректна " + newDate);
             sendMessage(chatId, "Ошибка. Новая дата некорректная дата  " + newDate +
-                    ". Пожалуйста, повторите попытку");
+                    ". Пожалуйста, повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         }
     }
 
@@ -359,7 +384,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
                     "быть преобразована в Bigdecimal " + newAmountExpense);
             sendMessage(chatId, "Введен некорретный расход. Проверьте правильность написания, " +
                     "допустимы только цифры и точка или запятая. Например 120 или 76.58. " +
-                    "Пожалуйста, повторите попытку");
+                    "Пожалуйста, повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         }
 
     }
@@ -391,27 +416,27 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         try {
             idExpense = Long.valueOf(idExpenseString);
             User user = userService.getUserByChatId(chatId);
-            if(checkerService.isExpenseAvailableToUser(idExpenseString, user)) {
-                Expense expense = expenseService.findExpenseById(idExpense);
+//            if(checkerService.isExpenseAvailableToUser(idExpenseString, user)) {
+                Expense expense = expenseService.findExpenseById(chatId, idExpense);
                 expenseMap.put(chatId, expense);
                 sendMessage(chatId, "Найден расход: \n" +
                                 expenseMapper.expenseToExpenseStringAllField(expense),
                         keyBoard.editExpenseByIdKeyboard(), true);
                 statusMessageMap.remove(chatId);
                 statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
-            }  else {
-                sendMessage(chatId, "Расход с ID: <b>" + idExpenseString + " </b> не найден. Повторите попытку",
-                                          keyBoard.editExpenseByIdKeyboard(), true);
-            }
+//            }  else {
+////                sendMessage(chatId, "Расход с ID: <b>" + idExpenseString + " </b> не найден. Повторите попытку",
+////                                          keyBoard.editExpenseByIdKeyboard(), true);
+//            }
 
         } catch (NumberFormatException e) {
             sendMessage(chatId, "Передан некорректный ID. " + idExpenseString +
                             "Вводите только цифры, например 15. Попробуйте еще раз!",
-                    true);
+                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         } catch (Exception e) {
-            sendMessage(chatId, "Расход с ID " + idExpenseString +
-                            " не найден. Попробуйте ввести другой ID!",
-                    true);
+            sendMessage(chatId, "Расход с ID: <b>" + idExpenseString + " </b> не найден. " +
+                            "Проверьте правильность введения и повторите попытку",
+                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         }
     }
 
@@ -425,16 +450,16 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         try {
             idExpense = Long.valueOf(idExpenseString);
             System.out.println("idExpense - " + idExpense);
-            Expense expense = expenseService.removeExpenseById(idExpense);
+            Expense expense = expenseService.removeExpenseById(chatId, idExpense);
             sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
             statusMessageMap.remove(chatId);
         } catch (NumberFormatException e) {
             sendMessage(chatId, "Передан некорректный ID " + idExpenseString +
-                            ". Вводите только цифры, например 15. Попробуйте еще раз!",
-                    true);
+                            ". Вводите только цифры, например 15. Проверьте правильность введения и повторите попытку",
+                    keyBoard.backToStartAndExpenseMenuKeyboard(),true);
         } catch (Exception e) {
             sendMessage(chatId, "Расход с ID " + idExpenseString +
-                            " не найден. Попробуйте ввести другой ID!", keyBoard.backTotStartMenuKeyboard(),
+                            " не найден. Попробуйте ввести другой ID!", keyBoard.backToStartAndExpenseMenuKeyboard(),
                     true);
 
         }
@@ -443,13 +468,13 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     private void deleteExpenseByChatId(long chatId) {
         try {
             Expense expense = expenseMap.get(chatId);
-            expenseService.removeExpenseById(expense.getId());
+            expenseService.removeExpenseById(chatId, expense.getId());
             sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
             statusMessageMap.remove(chatId);
             expenseMap.remove(chatId);
         } catch (NumberFormatException e) {
             sendMessage(chatId, "Расход не удален." +
-                    " Проверьте правильность введения", true);
+                    "Вернитесь в главное меню и повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
 
         }
     }
@@ -460,7 +485,8 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     }
 
     private void getAllExpensesFor7DayForUser(long chatId) {
-        sendMessage(chatId, expenseService.findExpenseFor7DayByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
+        sendMessage(chatId, expenseService.findExpenseFor7DayByChatId(chatId),
+                keyBoard.startExpenseKeyboard(), true);
     }
 
     private void getAllExpensesForUser(long chatId) {

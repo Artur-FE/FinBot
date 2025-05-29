@@ -13,6 +13,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     public List<Expense> findAllByUser_Id(Long userId);
     public Expense save(Expense expense);
     public boolean removeById(Long id);
+    public List<Expense> removeAllByUser_Id(Long userId);
     public boolean removeByNote(String note);
     public Expense findExpenseByNote(String note);
     public List<Expense> findAllExpenseByNoteIgnoreCase(String note);

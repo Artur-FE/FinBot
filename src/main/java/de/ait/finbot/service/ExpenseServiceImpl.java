@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Comparator;
 import java.util.List;
@@ -29,13 +32,21 @@ public class ExpenseServiceImpl implements ExpenseService{
     }
 
     @Override
-    public Expense findExpenseById(Long id) {
-        return expenseRepository.findById(id).get();
+    public Expense findExpenseById(Long chatId, Long expenseId) {
+        User user = userService.getUserByChatId(chatId);
+       return findAllExpenseByUser_Id(user.getId())
+                .stream()
+                .filter(expense -> expense.getId().equals(expenseId))
+                .findFirst()
+                .orElseThrow();
     }
 
     @Override
     public List<Expense> findAllExpenseByUser_Id(Long userId) {
-        return expenseRepository.findAllByUser_Id(userId);
+        return expenseRepository.findAllByUser_Id(userId)
+                .stream()
+                .filter(expense -> expense.isActive())
+                .toList();
     }
 
     @Override
@@ -51,8 +62,13 @@ public class ExpenseServiceImpl implements ExpenseService{
     }
 
     @Override
-    public List<Expense> findAllExpenseByNoteIgnoreCase(String name) {
-        return expenseRepository.findAllExpenseByNoteIgnoreCase(name);
+    public List<Expense> findAllExpenseByNoteIgnoreCase(Long chatId, String name) {
+        User user = userService.getUserByChatId(chatId);
+        List<Expense> allExpenseByUserId = findAllExpenseByUser_Id(user.getId())
+                .stream()
+                .filter(expense -> expense.getNote().equals(name))
+                .toList();
+        return allExpenseByUserId;
 
     }
 
@@ -63,7 +79,6 @@ public class ExpenseServiceImpl implements ExpenseService{
 
         String collect1 = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> expense.isActive())
                 .sorted(Comparator.comparing(Expense::getId))
                 .map(expense -> expenseMapper.expenseToExpenseString(expense))
                 .collect(Collectors.joining("\n"));
@@ -71,39 +86,44 @@ public class ExpenseServiceImpl implements ExpenseService{
         System.out.println(user.getId());
         BigDecimal reduce = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> expense.isActive())
                 .map(expense -> expense.getAmount())
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         System.out.println(reduce);
-        String textToSend = "Список расходов за весь период: " + "\n" + "\n" + collect1 + "\n" + "\n" + "Сумма расходов: " + reduce;
+        String textToSend = "<b>Список расходов за весь период:</b> " + "\n" + "\n" + collect1 + "\n" + "\n" + "Сумма расходов: " + reduce;
         return textToSend;
     }
 
     @Override
     public String findExpenseFor7DayByChatId(Long chatId) {
         User user = userService.getUserByChatId(chatId);
-        System.out.println("Получен юсер " + user + user.getId() + user.getUserName());
+        LocalDateTime todayMinus7Days = LocalDateTime.now().minusDays(6);
+        String stringTodayMinus7Days = todayMinus7Days.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        LocalDateTime today = LocalDateTime.now();
+        String stringToday = today.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+
 
         String collect1 = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> LocalDateTime.now().getDayOfYear() - expense.getCreatedAt().getDayOfYear() < 7)
-                .filter(expense -> expense.isActive())
+                .filter(expense -> Period.between(expense.getCreatedAt().toLocalDate(), today.toLocalDate()).getYears() == 0)
+                .filter(expense -> Period.between(expense.getCreatedAt().toLocalDate(), today.toLocalDate()).getMonths() == 0)
+                .filter(expense -> Period.between(expense.getCreatedAt().toLocalDate(), today.toLocalDate()).getDays() < 7)
                 .sorted(Comparator.comparing(Expense::getId))
-              //  .map(expense -> "<b>" + expense.getNote() + "</b>" + ": " + expense.getAmount() + ". <b>Дата:</b> " + expense.getCreatedAt().getDayOfMonth() + "." + String.format("%02d", expense.getCreatedAt().getMonthValue()) + "." + expense.getCreatedAt().getYear())
                 .map(expense -> expenseMapper.expenseToExpenseString(expense))
                 .collect(Collectors.joining("\n"));
 
         System.out.println(user.getId());
         BigDecimal reduce = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> LocalDateTime.now().getDayOfYear() - expense.getCreatedAt().getDayOfYear() < 7)
-                .filter(expense -> expense.isActive())
+                .filter(expense -> Period.between(expense.getCreatedAt().toLocalDate(), today.toLocalDate()).getYears() == 0)
+                .filter(expense -> Period.between(expense.getCreatedAt().toLocalDate(), today.toLocalDate()).getMonths() == 0)
+                .filter(expense -> Period.between(expense.getCreatedAt().toLocalDate(), today.toLocalDate()).getDays() < 7)
                 .map(expense -> expense.getAmount())
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        System.out.println(reduce);
-        String textToSend = "<b>Список расходов за последние 7 дней:</b> " + "\n" + "\n" + collect1 + "\n" + "\n" +"<b>Cумма расходов:</b> " + reduce;
+        String textToSend = "<b>Список расходов за последние 7 дней</b>, "  + stringTodayMinus7Days + " - " +
+                stringToday +  "\n" + "\n" + collect1 +
+                "\n" + "\n" +"<b>Cумма расходов:</b> " + reduce;
         return textToSend;
     }
 
@@ -114,8 +134,9 @@ public class ExpenseServiceImpl implements ExpenseService{
 
         String collect1 = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> expense.getCreatedAt().getDayOfYear() == LocalDateTime.now().getDayOfYear())
-                .filter(expense -> expense.isActive())
+                .filter(expense -> Period.between(LocalDateTime.now().toLocalDate(), expense.getCreatedAt().toLocalDate()).getYears() == 0)
+                .filter(expense -> Period.between(LocalDateTime.now().toLocalDate(), expense.getCreatedAt().toLocalDate()).getMonths() == 0)
+                .filter(expense -> Period.between(LocalDateTime.now().toLocalDate(), expense.getCreatedAt().toLocalDate()).getDays() == 0)
                 .sorted(Comparator.comparing(Expense::getId))
                 .map(expense -> expenseMapper.expenseToExpenseString(expense))
                 .collect(Collectors.joining("\n"));
@@ -123,8 +144,9 @@ public class ExpenseServiceImpl implements ExpenseService{
         System.out.println(user.getId());
         BigDecimal reduce = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> expense.getCreatedAt().getDayOfYear() == LocalDateTime.now().getDayOfYear())
-                .filter(expense -> expense.isActive())
+                .filter(expense -> Period.between(LocalDateTime.now().toLocalDate(), expense.getCreatedAt().toLocalDate()).getYears() == 0)
+                .filter(expense -> Period.between(LocalDateTime.now().toLocalDate(), expense.getCreatedAt().toLocalDate()).getMonths() == 0)
+                .filter(expense -> Period.between(LocalDateTime.now().toLocalDate(), expense.getCreatedAt().toLocalDate()).getDays() == 0)
                 .map(expense -> expense.getAmount())
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -134,21 +156,42 @@ public class ExpenseServiceImpl implements ExpenseService{
     }
 
     @Override
-    public Expense removeExpenseById(Long id) {
-        Expense expense = expenseRepository.findById(id).get();
+    public Expense removeExpenseById(Long chatId, Long expenseId) {
+        User user = userService.getUserByChatId(chatId);
+        boolean isExpenseByIdAvailableToUser = findAllExpenseByUser_Id(user.getId())
+                .stream()
+                .anyMatch(expense -> expense.getId().equals(expenseId));
+        Expense expense = expenseRepository.findById(expenseId).get();
         try {
-            if (!expense.isActive()) {
-                throw new RuntimeException();
-            } else {
+            if (isExpenseByIdAvailableToUser && expense.isActive()){
                 expense.setActive(false);
                 expenseRepository.save(expense);
                 return expense;
+            } else {
+                    throw new RuntimeException();
             }
         } catch (RuntimeException e) {
             throw new RuntimeException();
         }
 
     }
+
+    @Override
+    public boolean removeAllExpenseByUser(Long chatId) {
+        System.out.println("Вызов removeAllExpenseByUser");
+        User user = userService.getUserByChatId(chatId);
+
+        boolean b = expenseRepository.findAllByUser_Id(user.getId())
+                .stream()
+                .peek(expense -> expense.setActive(false))
+                .peek(expense -> expenseRepository.save(expense))
+                .noneMatch(expense -> expense.isActive());
+        System.out.println(b);
+
+        return b;
+
+    }
+
 
     @Override
     public Expense removeExpenseByNote(String note) {

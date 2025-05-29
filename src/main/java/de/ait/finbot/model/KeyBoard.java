@@ -1,6 +1,5 @@
 package de.ait.finbot.model;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -45,7 +44,7 @@ public class KeyBoard {
         keyboardRowList.add(row);
         row = new KeyboardRow();
         row.add("Редактировать расходы");
-        row.add("Вернуться в главное меню");
+        row.add("Главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -103,9 +102,12 @@ public class KeyBoard {
         return replyKeyboardMarkup;
     }
 
-    public ReplyKeyboardMarkup backTotStartMenuKeyboard(){
+    public ReplyKeyboardMarkup backToStartAndExpenseMenuKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
+        row.add("Мои расходы");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
         row.add("Вернуться в главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
@@ -121,6 +123,19 @@ public class KeyBoard {
         keyboardRowList.add(row);
         row = new KeyboardRow();
         row.add("Вернуться в главное меню");
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup deleteAllExpenseMenuKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("Уверен! Удалить все расходы!");
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add("Отменить и выйти в главное меню");
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
