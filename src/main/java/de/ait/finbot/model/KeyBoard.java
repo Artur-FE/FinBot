@@ -1,5 +1,6 @@
 package de.ait.finbot.model;
 
+import de.ait.finbot.config.IncomingMessage;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -13,19 +14,18 @@ public class KeyBoard {
     public ReplyKeyboardMarkup startKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Мои расходы");
-        row.add("Добавить расход");
+        row.add(IncomingMessage.MY_EXPENSES.getDescription());
+        row.add(IncomingMessage.ADD_EXPENSE.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Найти расход");
-        row.add("Редактировать расходы");
+        row.add(IncomingMessage.FIND_EXPENSE.getDescription());
+        row.add(IncomingMessage.EDIT_EXPENSES.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Список категорий");
-        row.add("Информация о боте");
+        row.add(IncomingMessage.CATEGORY_LIST.getDescription());
+        row.add(IncomingMessage.BOT_INFO.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -35,16 +35,16 @@ public class KeyBoard {
     public ReplyKeyboardMarkup startExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Расходы за сегодня");
-        row.add("Расходы за 7 дней");
+        row.add(IncomingMessage.EXPENSES_TODAY.getDescription());
+        row.add(IncomingMessage.EXPENSES_IN_7_DAYS.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Все мои расходы");
-        row.add("Добавить расход");
+        row.add(IncomingMessage.ALL_MY_EXPENSES.getDescription());
+        row.add(IncomingMessage.ADD_EXPENSE.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Редактировать расходы");
-        row.add("Главное меню");
+        row.add(IncomingMessage.EDIT_EXPENSES.getDescription());
+        row.add(IncomingMessage.MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -54,16 +54,16 @@ public class KeyBoard {
     public ReplyKeyboardMarkup editExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Редактировать по имени");
-        row.add("Редактировать по ID");
+        row.add(IncomingMessage.EDIT_BY_NAME.getDescription());
+        row.add(IncomingMessage.EDIT_BY_ID.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Удалить по имени");
-        row.add("Удалить по ID");
+        row.add(IncomingMessage.DELETE_BY_NAME.getDescription());
+        row.add(IncomingMessage.DELETE_BY_ID.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Удалить все расходы");
-        row.add("Вернуться в главное меню");
+        row.add(IncomingMessage.DELETE_ALL_EXPENSES.getDescription());
+        row.add(IncomingMessage.BACK_TO_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -73,16 +73,16 @@ public class KeyBoard {
     public ReplyKeyboardMarkup editExpenseByIdKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Изменить название");
-        row.add("Изменить сумму");
+        row.add(IncomingMessage.EDIT_NAME.getDescription());
+        row.add(IncomingMessage.EDIT_AMOUNT.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Изменить категорию");
-        row.add("Изменить дату");
+        row.add(IncomingMessage.EDIT_CATEGORY.getDescription());
+        row.add(IncomingMessage.EDIT_DATE.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Удалить расход");
-        row.add("В главное меню");
+        row.add(IncomingMessage.DELETE_EXPENSE.getDescription());
+        row.add(IncomingMessage.TO_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -92,10 +92,10 @@ public class KeyBoard {
     public ReplyKeyboardMarkup deleteExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Подтверждаю удаление расхода");
+        row.add(IncomingMessage.ACCEPT_DELETE_EXPENSE.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Отменить и выйти в главное меню");
+        row.add(IncomingMessage.CANCEL_AND_EXIT_TO_THE_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -105,10 +105,10 @@ public class KeyBoard {
     public ReplyKeyboardMarkup backToStartAndExpenseMenuKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Мои расходы");
+        row.add(IncomingMessage.MY_EXPENSES.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Вернуться в главное меню");
+        row.add(IncomingMessage.BACK_TO_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -118,11 +118,11 @@ public class KeyBoard {
     public ReplyKeyboardMarkup searchExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Найти по имени");
-        row.add("Найти по ID");
+        row.add(IncomingMessage.FIND_BY_NAME.getDescription());
+        row.add(IncomingMessage.FIND_BY_ID.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Вернуться в главное меню");
+        row.add(IncomingMessage.BACK_TO_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -132,10 +132,10 @@ public class KeyBoard {
     public ReplyKeyboardMarkup deleteAllExpenseMenuKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("Уверен! Удалить все расходы!");
+        row.add(IncomingMessage.SURE_DELETE_ALL_EXPENSES.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
-        row.add("Отменить и выйти в главное меню");
+        row.add(IncomingMessage.CANCEL_AND_EXIT_TO_THE_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
