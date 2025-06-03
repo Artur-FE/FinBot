@@ -58,7 +58,7 @@ public class ExpenseServiceImpl implements ExpenseService{
 
     @Override
     public Expense findExpenseByNote(String name) {
-        return expenseRepository.findExpenseByNote(name);
+        return expenseRepository.findExpenseByNoteIgnoreCase(name.toLowerCase().trim());
     }
 
     @Override
@@ -66,9 +66,10 @@ public class ExpenseServiceImpl implements ExpenseService{
         User user = userService.getUserByChatId(chatId);
         List<Expense> allExpenseByUserId = findAllExpenseByUser_Id(user.getId())
                 .stream()
-                .filter(expense -> expense.getNote().equals(name))
+                .filter(expense -> expense.getNote().equalsIgnoreCase(name))
                 .toList();
         return allExpenseByUserId;
+
 
     }
 
