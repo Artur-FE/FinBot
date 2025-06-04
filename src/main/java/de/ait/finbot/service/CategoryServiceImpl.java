@@ -2,6 +2,7 @@ package de.ait.finbot.service;
 
 import de.ait.finbot.mapper.CategoryMapper;
 import de.ait.finbot.model.Category;
+import de.ait.finbot.model.Expense;
 import de.ait.finbot.model.User;
 import de.ait.finbot.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,16 +21,10 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
     private final UserService userService;
+    private final ExpenseService expenseService;
 
     @Override
     public boolean init() {
-//        List<Category> categories = new ArrayList<>();
-//        categories.add(new Category("Продукты", null));
-//        categories.add(new Category("Транспорт", null));
-//        categories.add(new Category("Коммунальные услуги", null));
-//        categories.add(new Category("Развлечения", null));
-//        categories.add(new Category("Другое", null));
-//        log.info(categories.toString());
         if (categoryRepository.findAll().isEmpty()) {
             categoryRepository.save(new Category("Продукты", null));
             categoryRepository.save(new Category("Транспорт", null));
@@ -52,8 +48,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category deleteCategory() {
-        return null;
+    public Category deleteCategoryById(Long categoryId) {
+        Category categoryById = categoryRepository.findCategoryById(categoryId);
+        categoryById.setIsActive(false);
+        categoryRepository.save(categoryById);
+        return categoryById;
     }
 
     @Override
@@ -63,9 +62,11 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<Category> getCategoryByUserId(Long userId) {
-//        return categoryRepository.findAllByUser_Id(userId);
         List<Category> resultCategory = categoryRepository.findAllByUser_Id(null);
-        List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId);
+        List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId)
+                .stream()
+                .filter(Category::getIsActive)
+                        .toList();
         resultCategory.addAll(categoryByUserId);
         return resultCategory;
 
@@ -75,13 +76,10 @@ public class CategoryServiceImpl implements CategoryService {
     public String getAllCategoryForUser(Long chatId) {
         User userByChatId = userService.getUserByChatId(chatId);
         userByChatId.getId();
-
-//        List<Category> resultCategory = getCategoryByUserId(null);
-//        List<Category> categoryByUserId = getCategoryByUserId(userByChatId.getId());
-//        resultCategory.addAll(categoryByUserId);
         List<Category> resultCategory = getCategoryByUserId(userByChatId.getId());
         String category = resultCategory.stream()
-                // .map(Category::getName)
+                .filter(Category::getIsActive)
+                .sorted(Comparator.comparing(Category::getId))
                 .map(category1 -> "<b>ID: </b>" + category1.getId() + ". <b>Имя: </b>" + category1.getName())
                 .collect(Collectors.joining("\n"));
         return category;
@@ -91,5 +89,59 @@ public class CategoryServiceImpl implements CategoryService {
     public Category getCategoryById(Long categoryID) {
 
         return categoryRepository.findCategoryById(categoryID);
+    }
+
+    @Override
+    public String getAllCategoryToDeleteForUser(Long chatId) {
+          User userByChatId = userService.getUserByChatId(chatId);
+          Long userId = userByChatId.getId();
+          List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId);
+          if(categoryByUserId.isEmpty()) {
+              throw new RuntimeException();
+          }
+          List<Long> allExpenseByUserId = expenseService.findAllExpenseByUser_Id(userId)
+                  .stream()
+                  .map(expense -> expense.getCategory().getId())
+                  .toList();
+          log.info(String.valueOf(allExpenseByUserId));
+          List<Category> resultIdToDelete = categoryByUserId
+                  .stream()
+                  .filter(categoryByUser -> !allExpenseByUserId.contains(categoryByUser.getId()))
+                  .toList();
+
+        log.info(String.valueOf(resultIdToDelete));
+          String category = resultIdToDelete.stream()
+                  .sorted(Comparator.comparing(Category::getId))
+                  .map(category1 -> "<b>ID: </b>" + category1.getId() + ". <b>Имя: </b>" + category1.getName())
+                  .collect(Collectors.joining("\n"));
+          return category;
+
+    }
+
+    @Override
+    public boolean checkCategoryToDeleteForUser(Long chatId, String categoryId) {
+       try {
+           Long longId = Long.valueOf(categoryId);
+           User userByChatId = userService.getUserByChatId(chatId);
+           Long userId = userByChatId.getId();
+           List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId);
+           if (categoryByUserId.isEmpty()) {
+               throw new RuntimeException();
+           }
+           List<Long> allExpenseByUserId = expenseService.findAllExpenseByUser_Id(userId)
+                   .stream()
+                   .map(expense -> expense.getCategory().getId())
+                   .toList();
+           log.info(String.valueOf(allExpenseByUserId));
+           List<Long> resultIdToDelete = categoryByUserId
+                   .stream()
+                   .filter(categoryByUser -> !allExpenseByUserId.contains(categoryByUser.getId()))
+                   .map(Category::getId)
+                   .toList();
+           System.out.println("resultIdToDelete.contains(longId) + " + resultIdToDelete.contains(longId));
+           return resultIdToDelete.contains(longId);
+       } catch (NumberFormatException e) {
+           throw new NumberFormatException();
+       }
     }
 }

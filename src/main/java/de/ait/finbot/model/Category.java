@@ -26,6 +26,8 @@ public class Category {
     private User user;
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
+    @Column(name = "isActive")
+    private Boolean isActive;
 
     public Category(String name, User user) {
         this.name = name;
@@ -33,7 +35,8 @@ public class Category {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Category() {}
+    public Category() {
+    }
 
     @Override
     public String toString() {
@@ -42,6 +45,7 @@ public class Category {
                 ", name='" + name + '\'' +
                 ", user=" + user +
                 ", createdAt=" + createdAt +
+                ", isActive=" + isActive +
                 '}';
     }
 }

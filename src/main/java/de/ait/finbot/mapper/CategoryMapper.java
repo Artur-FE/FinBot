@@ -17,6 +17,7 @@ public class CategoryMapper {
     public Category StringNameToCategory(Long chatId, String name) {
         Category category = new Category();
         category.setName(name);
+        category.setIsActive(true);
         category.setCreatedAt(LocalDateTime.now());
         User userById = userService.getUserByChatId(chatId);
         category.setUser(userById);

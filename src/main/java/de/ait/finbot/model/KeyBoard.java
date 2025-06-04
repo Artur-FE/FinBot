@@ -115,6 +115,19 @@ public class KeyBoard {
         return replyKeyboardMarkup;
     }
 
+    public ReplyKeyboardMarkup backToStartAndCategoryMenuKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add(IncomingMessage.CATEGORY_LIST.getDescription());
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add(IncomingMessage.BACK_TO_MAIN_MENU.getDescription());
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
     public ReplyKeyboardMarkup searchExpenseKeyboard(){
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
@@ -136,6 +149,21 @@ public class KeyBoard {
         keyboardRowList.add(row);
         row = new KeyboardRow();
         row.add(IncomingMessage.CANCEL_AND_EXIT_TO_THE_MAIN_MENU.getDescription());
+        keyboardRowList.add(row);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboardMarkup categoryMenuKeyboard(){
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add(IncomingMessage.ADD_CATEGORY.getDescription());
+        row.add(IncomingMessage.EDIT_CATEGORIES.getDescription());
+        keyboardRowList.add(row);
+        row = new KeyboardRow();
+        row.add(IncomingMessage.DELETE_CATEGORY.getDescription());
+        row.add(IncomingMessage.BACK_TO_MAIN_MENU.getDescription());
         keyboardRowList.add(row);
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardRowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
