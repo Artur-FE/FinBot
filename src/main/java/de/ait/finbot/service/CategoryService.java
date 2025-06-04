@@ -13,5 +13,8 @@ public interface CategoryService {
     public String getAllCategoryForUser(Long chatId);
     public Category getCategoryById(Long categoryID);
     public String getAllCategoryToDeleteForUser(Long chatId);
+    public String getAllCategoryToEditNameForUser(Long chatId);
     public boolean checkCategoryToDeleteForUser(Long chatId, String categoryId);
+    public List<Long> getCustomCategoryByUser_Id(Long chatId);
+    public Category editNameCategory(Category category, String newName);
 }
