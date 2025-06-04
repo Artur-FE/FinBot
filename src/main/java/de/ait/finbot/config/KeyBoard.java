@@ -1,6 +1,5 @@
-package de.ait.finbot.model;
+package de.ait.finbot.config;
 
-import de.ait.finbot.config.IncomingMessage;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;

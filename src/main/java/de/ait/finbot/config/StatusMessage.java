@@ -1,4 +1,4 @@
-package de.ait.finbot.model;
+package de.ait.finbot.config;
 
 public enum StatusMessage {
     WAITING_CATEGORY,
