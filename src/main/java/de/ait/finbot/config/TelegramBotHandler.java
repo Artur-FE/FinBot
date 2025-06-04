@@ -1,5 +1,6 @@
 package de.ait.finbot.config;
 
+import de.ait.finbot.composer.CategoryMessageComposer;
 import de.ait.finbot.mapper.ExpenseMapper;
 import de.ait.finbot.mapper.UserMapper;
 import de.ait.finbot.model.*;
@@ -42,9 +43,13 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     private final ExpenseMapper expenseMapper;
     private final String token;
     private final KeyBoard keyBoard;
-    private final Map<Long, StatusMessage> statusMessageMap = new HashMap<>();
-    private final Map<Long, Expense> expenseMap = new HashMap<>();
-    private final Map<Long, Category> categoryMap = new HashMap<>();
+    private final CategoryMessageComposer categoryMessageComposer;
+    //private final Map<Long, StatusMessage> statusMessageMap = new HashMap<>();
+    private final StatusMessageMap statusMessageMap;
+   // private final Map<Long, Expense> expenseMap = new HashMap<>();
+    private final ExpenseMap expenseMap;
+   // private final Map<Long, Category> categoryMap = new HashMap<>();
+    private final CategoryMap categoryMap;
     public final String INFO = "Я — твой помощник по учёту расходов.\n" +
             "С помощью меня ты сможешь быстро записывать траты, следить за своими расходами и управлять своими финансами прямо здесь, в Telegram.\n" +
             "\n" +
@@ -59,7 +64,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             "\n" +
             "Начнём? Выбери действие ниже ⬇\uFE0F";
 
-    public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, KeyBoard keyBoard) {
+    public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, KeyBoard keyBoard, CategoryMessageComposer categoryCommand, StatusMessageMap statusMessageMap, ExpenseMap expenseMap, CategoryMap categoryMap) {
         this.categoryService = categoryService;
         this.expenseService = expenseService;
         this.userService = userService;
@@ -67,6 +72,10 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         this.expenseMapper = expenseMapper;
         this.token = token;
         this.keyBoard = keyBoard;
+        this.categoryMessageComposer = categoryCommand;
+        this.statusMessageMap = statusMessageMap;
+        this.expenseMap = expenseMap;
+        this.categoryMap = categoryMap;
         telegramClient = new OkHttpTelegramClient(getBotToken());
         System.out.println(telegramClient);
         List<BotCommand> botCommandList = new ArrayList<>();
@@ -205,6 +214,8 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             }
         }
         System.out.println(statusMessageMap);
+        System.out.println(categoryMap);
+        System.out.println(expenseMap);
     }
 
     private void putCategoryName(long chatId, String messageText) {
@@ -327,6 +338,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
                     expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.deleteExpenseKeyboard(), true);
             statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
             expenseMap.put(chatId, expense);
+            System.out.println(expenseMap);
         } else if (!allExpenseByChatId.isBlank()) {
             sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
                     "Введите ID расхода для дальнейшего удаления \n\n" +
@@ -630,8 +642,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     }
 
     private void getAllCategoryForUser(Long chatId) {
-        sendMessage(chatId, "<b>Список твои категорий:</b> \n\n" + categoryService.getAllCategoryForUser(chatId),
-                keyBoard.categoryMenuKeyboard(), true);
+        sendMessage(categoryMessageComposer.getAllCategoryForUser(chatId));
     }
 
     private void startCommandReceived(long chatId, String name) {
@@ -682,7 +693,6 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         try {
             telegramClient.execute(sendMessage);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
             log.error(e.getMessage());
         }
     }
@@ -695,6 +705,20 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             telegramClient.execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
+            log.error(e.getMessage());
+        }
+    }
+
+    private void sendMessage(MessageObj messageObj) {
+        SendMessage sendMessage = new SendMessage(String.valueOf(messageObj.getChatId()), messageObj.getTextToSend());
+        sendMessage.setReplyMarkup(messageObj.getKeyBoard());
+        if (messageObj.isSetParseMode()) {
+            sendMessage.setParseMode("HTML");
+        }
+        log.info(statusMessageMap.toString());
+        try {
+            telegramClient.execute(sendMessage);
+        } catch (TelegramApiException e) {
             log.error(e.getMessage());
         }
     }
