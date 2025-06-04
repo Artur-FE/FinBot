@@ -159,7 +159,7 @@ public class KeyBoard {
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
         row.add(IncomingMessage.ADD_CATEGORY.getDescription());
-        row.add(IncomingMessage.EDIT_CATEGORIES.getDescription());
+        row.add(IncomingMessage.EDIT_CATEGORY_NAME.getDescription());
         keyboardRowList.add(row);
         row = new KeyboardRow();
         row.add(IncomingMessage.DELETE_CATEGORY.getDescription());

@@ -12,7 +12,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     public Optional<Category> findById(Long id);
     public Category save(Category category);
     public List<Category> findAllByUser_Id(Long userId);
+    public List<Category> findCustomCategoryByUser_Id(Long chatId);
    // public Category save(List<Category> category);
    public Category findCategoryById(Long categoryID);
+
 
 }

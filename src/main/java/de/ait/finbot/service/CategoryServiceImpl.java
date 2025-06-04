@@ -47,6 +47,13 @@ public class CategoryServiceImpl implements CategoryService {
         return category;
     }
 
+    public Category editNameCategory(Category category, String newName) {
+        category.setName(newName);
+        categoryRepository.save(category);
+        log.info(category.toString());
+        return category;
+    }
+
     @Override
     public Category deleteCategoryById(Long categoryId) {
         Category categoryById = categoryRepository.findCategoryById(categoryId);
@@ -66,7 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId)
                 .stream()
                 .filter(Category::getIsActive)
-                        .toList();
+                .toList();
         resultCategory.addAll(categoryByUserId);
         return resultCategory;
 
@@ -93,55 +100,96 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public String getAllCategoryToDeleteForUser(Long chatId) {
-          User userByChatId = userService.getUserByChatId(chatId);
-          Long userId = userByChatId.getId();
-          List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId);
-          if(categoryByUserId.isEmpty()) {
-              throw new RuntimeException();
-          }
-          List<Long> allExpenseByUserId = expenseService.findAllExpenseByUser_Id(userId)
-                  .stream()
-                  .map(expense -> expense.getCategory().getId())
-                  .toList();
-          log.info(String.valueOf(allExpenseByUserId));
-          List<Category> resultIdToDelete = categoryByUserId
-                  .stream()
-                  .filter(categoryByUser -> !allExpenseByUserId.contains(categoryByUser.getId()))
-                  .toList();
+        User userByChatId = userService.getUserByChatId(chatId);
+        Long userId = userByChatId.getId();
+        List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId)
+                .stream()
+                .filter(Category::getIsActive)
+                .toList();
+        if (categoryByUserId.isEmpty()) {
+            throw new RuntimeException();
+        }
+        List<Long> allExpenseByUserId = expenseService.findAllExpenseByUser_Id(userId)
+                .stream()
+                .map(expense -> expense.getCategory().getId())
+                .toList();
+        log.info(String.valueOf(allExpenseByUserId));
+        List<Category> resultIdToDelete = categoryByUserId
+                .stream()
+                .filter(categoryByUser -> !allExpenseByUserId.contains(categoryByUser.getId()))
+                .toList();
 
         log.info(String.valueOf(resultIdToDelete));
-          String category = resultIdToDelete.stream()
-                  .sorted(Comparator.comparing(Category::getId))
-                  .map(category1 -> "<b>ID: </b>" + category1.getId() + ". <b>Имя: </b>" + category1.getName())
-                  .collect(Collectors.joining("\n"));
-          return category;
+        String category = resultIdToDelete.stream()
+                .sorted(Comparator.comparing(Category::getId))
+                .map(category1 -> "<b>ID: </b>" + category1.getId() + ". <b>Имя: </b>" + category1.getName())
+                .collect(Collectors.joining("\n"));
+        return category;
 
     }
 
     @Override
+    public String getAllCategoryToEditNameForUser(Long chatId) {
+        User userByChatId = userService.getUserByChatId(chatId);
+        Long userId = userByChatId.getId();
+        List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId)
+                .stream()
+                .filter(Category::getIsActive)
+                .toList();
+
+        if (categoryByUserId.isEmpty()) {
+            throw new RuntimeException();
+        }
+
+        String category = categoryByUserId.stream()
+                .sorted(Comparator.comparing(Category::getId))
+                .filter(Category::getIsActive)
+                .map(category1 -> "<b>ID: </b>" + category1.getId() + ". <b>Имя: </b>" + category1.getName())
+                .collect(Collectors.joining("\n"));
+        return category;
+    }
+
+    @Override
     public boolean checkCategoryToDeleteForUser(Long chatId, String categoryId) {
-       try {
-           Long longId = Long.valueOf(categoryId);
-           User userByChatId = userService.getUserByChatId(chatId);
-           Long userId = userByChatId.getId();
-           List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId);
-           if (categoryByUserId.isEmpty()) {
-               throw new RuntimeException();
-           }
-           List<Long> allExpenseByUserId = expenseService.findAllExpenseByUser_Id(userId)
-                   .stream()
-                   .map(expense -> expense.getCategory().getId())
-                   .toList();
-           log.info(String.valueOf(allExpenseByUserId));
-           List<Long> resultIdToDelete = categoryByUserId
-                   .stream()
-                   .filter(categoryByUser -> !allExpenseByUserId.contains(categoryByUser.getId()))
-                   .map(Category::getId)
-                   .toList();
-           System.out.println("resultIdToDelete.contains(longId) + " + resultIdToDelete.contains(longId));
-           return resultIdToDelete.contains(longId);
-       } catch (NumberFormatException e) {
-           throw new NumberFormatException();
-       }
+        try {
+            Long longId = Long.valueOf(categoryId);
+            User userByChatId = userService.getUserByChatId(chatId);
+            Long userId = userByChatId.getId();
+            List<Category> categoryByUserId = categoryRepository.findAllByUser_Id(userId)
+                    .stream()
+                    .filter(Category::getIsActive)
+                    .toList();
+            if (categoryByUserId.isEmpty()) {
+                throw new RuntimeException();
+            }
+            List<Long> allExpenseByUserId = expenseService.findAllExpenseByUser_Id(userId)
+                    .stream()
+                    .map(expense -> expense.getCategory().getId())
+                    .toList();
+            log.info(String.valueOf(allExpenseByUserId));
+            List<Long> resultIdToDelete = categoryByUserId
+                    .stream()
+                    .filter(Category::getIsActive)
+                    .filter(categoryByUser -> !allExpenseByUserId.contains(categoryByUser.getId()))
+                    .map(Category::getId)
+                    .toList();
+            System.out.println("resultIdToDelete.contains(longId) + " + resultIdToDelete.contains(longId));
+            return resultIdToDelete.contains(longId);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException();
+        }
+    }
+
+    @Override
+    public List<Long> getCustomCategoryByUser_Id(Long chatId) {
+        User userByChatId = userService.getUserByChatId(chatId);
+        Long userId = userByChatId.getId();
+        List<Long> customCategoryByUser_Id = categoryRepository.findCustomCategoryByUser_Id(userId)
+                .stream()
+                .filter(Category::getIsActive)
+                .map(Category::getId)
+                .toList();
+        System.out.println(customCategoryByUser_Id);
+        return customCategoryByUser_Id;
     }
 }

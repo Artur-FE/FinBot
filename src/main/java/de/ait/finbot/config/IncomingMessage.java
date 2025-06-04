@@ -31,7 +31,7 @@ public enum IncomingMessage {
     EDIT_DATE("Изменить дату"),
     DELETE_EXPENSE("Удалить расход"),
     ACCEPT_DELETE_EXPENSE("Подтверждаю удаление расхода"),
-    EDIT_CATEGORIES("Редактировить категории"),
+    EDIT_CATEGORY_NAME("Изменить имя категории"),
     DELETE_CATEGORY("Удалить категорию"),
     BOT_INFO("Информация о боте");
 
