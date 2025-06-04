@@ -8,7 +8,7 @@ public enum IncomingMessage {
     TO_MAIN_MENU("В главное меню"),
     MAIN_MENU("Главное меню"),
     CANCEL_AND_EXIT_TO_THE_MAIN_MENU("Отменить и выйти в главное меню"),
-    CATEGORY_LIST("Список категорий"),
+    CATEGORY_LIST("Мои категории"),
     MY_EXPENSES("Мои расходы"),
     EXPENSES_TODAY("Расходы за сегодня"),
     EXPENSES_IN_7_DAYS("Расходы за 7 дней"),
@@ -31,6 +31,8 @@ public enum IncomingMessage {
     EDIT_DATE("Изменить дату"),
     DELETE_EXPENSE("Удалить расход"),
     ACCEPT_DELETE_EXPENSE("Подтверждаю удаление расхода"),
+    EDIT_CATEGORIES("Редактировить категории"),
+    DELETE_CATEGORY("Удалить категорию"),
     BOT_INFO("Информация о боте");
 
     private String description;
