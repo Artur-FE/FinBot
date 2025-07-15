@@ -5,11 +5,13 @@ import de.ait.finbot.model.User;
 import de.ait.finbot.repository.UserRepository;
 import de.ait.finbot.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.Mapper;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CategoryMapper {
@@ -21,8 +23,8 @@ public class CategoryMapper {
         category.setCreatedAt(LocalDateTime.now());
         User userById = userService.getUserByChatId(chatId);
         category.setUser(userById);
-        System.out.print(category);
-        System.out.println(" Категория после добавления юзера");
+        log.info("класс CategoryMapper, метод StringNameCategory отработал, категория - {} добавлена юзеру с " +
+              "chatId - {}", category, chatId);
         return category;
     }
 }
