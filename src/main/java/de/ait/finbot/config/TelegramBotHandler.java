@@ -1,6 +1,7 @@
 package de.ait.finbot.config;
 
 import de.ait.finbot.composer.CategoryMessageComposer;
+import de.ait.finbot.composer.ExpenseMessageComposer;
 import de.ait.finbot.mapper.ExpenseMapper;
 import de.ait.finbot.mapper.UserMapper;
 import de.ait.finbot.model.*;
@@ -44,6 +45,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     private final String token;
     private final KeyBoard keyBoard;
     private final CategoryMessageComposer categoryMessageComposer;
+    private final ExpenseMessageComposer expenseMessageComposer;
     //private final Map<Long, StatusMessage> statusMessageMap = new HashMap<>();
     private final StatusMessageMap statusMessageMap;
    // private final Map<Long, Expense> expenseMap = new HashMap<>();
@@ -51,13 +53,14 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
    // private final Map<Long, Category> categoryMap = new HashMap<>();
     private final CategoryMap categoryMap;
     public String info;
-    public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, @Value("${bot.info.message}") String info,  KeyBoard keyBoard, CategoryMessageComposer categoryCommand, StatusMessageMap statusMessageMap, ExpenseMap expenseMap, CategoryMap categoryMap) {
+    public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, ExpenseMessageComposer expenseMessageComposer, @Value("${bot.info.message}") String info, KeyBoard keyBoard, CategoryMessageComposer categoryCommand, StatusMessageMap statusMessageMap, ExpenseMap expenseMap, CategoryMap categoryMap) {
         this.categoryService = categoryService;
         this.expenseService = expenseService;
         this.userService = userService;
         this.userMapper = userMapper;
         this.expenseMapper = expenseMapper;
         this.token = token;
+        this.expenseMessageComposer = expenseMessageComposer;
         this.info = info;
         this.keyBoard = keyBoard;
         this.categoryMessageComposer = categoryCommand;
@@ -201,9 +204,9 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
                 // log.error("chatId " + chatId + " ошибка");
             }
         }
-        System.out.println(statusMessageMap);
-        System.out.println(categoryMap);
-        System.out.println(expenseMap);
+        log.info(String.valueOf(statusMessageMap));
+        log.info(String.valueOf(categoryMap));
+        log.info(String.valueOf(expenseMap));
     }
 
     private void editCategoryName(long chatId, String messageText) {
@@ -468,63 +471,75 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
 
     }
 
-    private void deleteExpenseById(long chatId, String idExpenseString) {
-        Long idExpense = 0L;
-        try {
-            idExpense = Long.valueOf(idExpenseString);
-            System.out.println("idExpense - " + idExpense);
-            Expense expense = expenseService.removeExpenseById(chatId, idExpense);
-            sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
-            statusMessageMap.remove(chatId);
-        } catch (NumberFormatException e) {
-            sendMessage(chatId, "Передан некорректный ID " + idExpenseString +
-                            ". Вводите только цифры, например 15. Проверьте правильность введения и повторите попытку",
-                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        } catch (Exception e) {
-            sendMessage(chatId, "Расход с ID " + idExpenseString +
-                            " не найден. Попробуйте ввести другой ID!", keyBoard.backToStartAndExpenseMenuKeyboard(),
-                    true);
+//    private void deleteExpenseById(long chatId, String idExpenseString) {
+//        Long idExpense = 0L;
+//        try {
+//            idExpense = Long.valueOf(idExpenseString);
+//            System.out.println("idExpense - " + idExpense);
+//            Expense expense = expenseService.removeExpenseById(chatId, idExpense);
+//            sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
+//            statusMessageMap.remove(chatId);
+//        } catch (NumberFormatException e) {
+//            sendMessage(chatId, "Передан некорректный ID " + idExpenseString +
+//                            ". Вводите только цифры, например 15. Проверьте правильность введения и повторите попытку",
+//                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        } catch (Exception e) {
+//            sendMessage(chatId, "Расход с ID " + idExpenseString +
+//                            " не найден. Попробуйте ввести другой ID!", keyBoard.backToStartAndExpenseMenuKeyboard(),
+//                    true);
+//
+//        }
+//    }
 
-        }
-    }
+//    private void deleteExpenseById(long chatId, String idExpenseString) {
+//        sendMessage(expenseMessageComposer.deleteExpenseById(chatId, idExpenseString));
+//    }
+
+//    private void deleteExpenseByChatId(long chatId) {
+//        try {
+//            Expense expense = expenseMap.get(chatId);
+//            expenseService.removeExpenseById(chatId, expense.getId());
+//            sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
+//            statusMessageMap.remove(chatId);
+//            expenseMap.remove(chatId);
+//        } catch (NumberFormatException e) {
+//            sendMessage(chatId, "Расход не удален." +
+//                    "Вернитесь в главное меню и повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//
+//        }
+//    }
 
     private void deleteExpenseByChatId(long chatId) {
-        try {
-            Expense expense = expenseMap.get(chatId);
-            expenseService.removeExpenseById(chatId, expense.getId());
-            sendMessage(chatId, "Расход " + "<b>" + expense.getNote() + "</b>" + " c ID " + expense.getId() + "<b> успешно удален</b>", keyBoard.startKeyboard(), true);
-            statusMessageMap.remove(chatId);
-            expenseMap.remove(chatId);
-        } catch (NumberFormatException e) {
-            sendMessage(chatId, "Расход не удален." +
-                    "Вернитесь в главное меню и повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-
-        }
+        sendMessage(expenseMessageComposer.deleteExpenseByChatId(chatId));
     }
 
-    private void waitingIDForExpenseToDelete(long chatId, String messageText) {
 
-        if (StatusMessage.WAITING_ID_TO_DELETE.equals(statusMessageMap.get(chatId))) {
-            deleteExpenseById(chatId, messageText);
-            System.out.println("Удалить по id блок if");
-        } else {
-            sendMessage(chatId, "Введите ID расхода для удаления (только цифры), например 24");
-            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_DELETE);
-            System.out.println("Удалить по id блок else");
-        }
-    }
+//    private void waitingIDForExpenseToDelete(long chatId, String messageText) {
+//
+//        if (StatusMessage.WAITING_ID_TO_DELETE.equals(statusMessageMap.get(chatId))) {
+//            deleteExpenseById(chatId, messageText);
+//            System.out.println("Удалить по id блок if");
+//        } else {
+//            sendMessage(chatId, "Введите ID расхода для удаления (только цифры), например 24");
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_DELETE);
+//            System.out.println("Удалить по id блок else");
+//        }
+//    }
+
+private void waitingIDForExpenseToDelete(long chatId, String messageText) {
+        sendMessage(expenseMessageComposer.waitingIDForExpenseToDelete(chatId,messageText));
+}
 
     private void getAllExpensesFor7DayForUser(long chatId) {
-        sendMessage(chatId, expenseService.findExpenseFor7DayByChatId(chatId),
-                keyBoard.startExpenseKeyboard(), true);
+        sendMessage(expenseMessageComposer.getAllExpensesFor7DayForUser(chatId));
     }
 
     private void getAllExpensesForUser(long chatId) {
-        sendMessage(chatId, expenseService.findAllExpenseByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
+        sendMessage(expenseMessageComposer.getAllExpensesForUser(chatId));
     }
 
     private void getAllExpensesForToDayForUser(long chatId) {
-        sendMessage(chatId, expenseService.findExpenseForToDayByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
+        sendMessage(expenseMessageComposer.getAllExpensesForToDayForUser(chatId));
     }
 
     private void addCategory(long chatId, String messageText) {
@@ -532,26 +547,33 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
        sendMessage(categoryMessageComposer.addCategory(chatId, messageText));
     }
 
-    private void putExpense(long chatId, String messageText) {
-        Expense expense = expenseService.addExpense(expenseMapper.chatIdAndNoteToExpense(chatId, messageText));
-        String expenseAmount = String.valueOf(expense.getAmount());
-        String expenseName = expense.getNote();
-        String nameCategory = expense.getCategory().getName();
-        sendMessage(chatId, "Расход добавлен" + "\n" + "Сумма: "
-                + expenseAmount + "\n" +
-                "Название: " + expenseName + "\n"
-                + "Категория: " + nameCategory, keyBoard.startExpenseKeyboard());
+//    private void putExpense(long chatId, String messageText) {
+//        Expense expense = expenseService.addExpense(expenseMapper.chatIdAndNoteToExpense(chatId, messageText));
+//        String expenseAmount = String.valueOf(expense.getAmount());
+//        String expenseName = expense.getNote();
+//        String nameCategory = expense.getCategory().getName();
+//        sendMessage(chatId, "Расход добавлен" + "\n" + "Сумма: "
+//                + expenseAmount + "\n" +
+//                "Название: " + expenseName + "\n"
+//                + "Категория: " + nameCategory, keyBoard.startExpenseKeyboard());
+//
+//        System.out.println("Расход добавлен успешно " + expenseMapper.chatIdAndNoteToExpense(chatId, messageText));
+//        System.out.println(statusMessageMap.remove(chatId));
+//
+//    }
 
-        System.out.println("Расход добавлен успешно " + expenseMapper.chatIdAndNoteToExpense(chatId, messageText));
-        System.out.println(statusMessageMap.remove(chatId));
-
+    private void putExpense(long chatId, String messageText){
+        sendMessage(expenseMessageComposer.putExpense(chatId, messageText));
     }
 
+//    private void addExpense(long chatId) {
+//        sendMessage(chatId, "Введите сумму и примечание, чтобы я " +
+//                "мог определить в какую категорию сохранить трату\n" +
+//                "Например: 250 еда или 500 одежда", keyBoard.startExpenseKeyboard());
+//        statusMessageMap.put(chatId, StatusMessage.WAITING_EXPENSE);
+//    }
     private void addExpense(long chatId) {
-        sendMessage(chatId, "Введите сумму и примечание, чтобы я " +
-                "мог определить в какую категорию сохранить трату\n" +
-                "Например: 250 еда или 500 одежда", keyBoard.startExpenseKeyboard());
-        statusMessageMap.put(chatId, StatusMessage.WAITING_EXPENSE);
+        sendMessage(expenseMessageComposer.addExpense(chatId));
     }
 
     private void getAllCategoryForUser(Long chatId) {
