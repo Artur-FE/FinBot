@@ -50,27 +50,15 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     private final ExpenseMap expenseMap;
    // private final Map<Long, Category> categoryMap = new HashMap<>();
     private final CategoryMap categoryMap;
-    public final String INFO = "Я — твой помощник по учёту расходов.\n" +
-            "С помощью меня ты сможешь быстро записывать траты, следить за своими расходами и управлять своими финансами прямо здесь, в Telegram.\n" +
-            "\n" +
-            "Вот что ты можешь делать:\n" +
-            "➕ Добавить расходы /add_expense\n" +
-            "\uD83D\uDCCB Посмотреть список расходов /my_expenses\n" +
-            "\u270F\uFE0F Редактировать расходы /edit_expense\n" +
-            "\uD83D\uDD0D Поиск расходов /search_expense\n" +
-            "\uD83D\uDCC1 Посмотреть список категорий расходов /category\n" +
-            "➕ Добавить категорию расходов /add_category\n" +
-            "\u270F\uFE0F Редактировать категории /edit_category\n" +
-            "\n" +
-            "Начнём? Выбери действие ниже ⬇\uFE0F";
-
-    public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, KeyBoard keyBoard, CategoryMessageComposer categoryCommand, StatusMessageMap statusMessageMap, ExpenseMap expenseMap, CategoryMap categoryMap) {
+    public String info;
+    public TelegramBotHandler(CategoryService categoryService, ExpenseService expenseService, UserServiceImpl userService, UserMapper userMapper, ExpenseMapper expenseMapper, @Value("${bot.token}") String token, @Value("${bot.info.message}") String info,  KeyBoard keyBoard, CategoryMessageComposer categoryCommand, StatusMessageMap statusMessageMap, ExpenseMap expenseMap, CategoryMap categoryMap) {
         this.categoryService = categoryService;
         this.expenseService = expenseService;
         this.userService = userService;
         this.userMapper = userMapper;
         this.expenseMapper = expenseMapper;
         this.token = token;
+        this.info = info;
         this.keyBoard = keyBoard;
         this.categoryMessageComposer = categoryCommand;
         this.statusMessageMap = statusMessageMap;
@@ -126,7 +114,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             } else if (messageText.equals("/info")
                     || messageText.equals(IncomingMessage.BOT_INFO.getDescription())) {
                 statusMessageMap.remove(chatId);
-                sendMessage(chatId, INFO, keyBoard.startKeyboard());
+                sendMessage(chatId, info, keyBoard.startKeyboard());
             } else if (messageText.equals("/category")
                     || messageText.equals(IncomingMessage.CATEGORY_LIST.getDescription())) {
                 statusMessageMap.remove(chatId);
@@ -218,84 +206,21 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         System.out.println(expenseMap);
     }
 
+    private void editCategoryName(long chatId, String messageText) {
+        log.info("editCategoryName: chatId - {}, messageText - {}", chatId, messageText);
+       sendMessage(categoryMessageComposer.editCategoryName(chatId, messageText));
+    }
+
     private void putCategoryName(long chatId, String messageText) {
-        Category category = categoryMap.get(chatId);
-        categoryService.editNameCategory(category, messageText);
-        sendMessage(chatId, "Имя категории с <b>ID: " + category.getId() +
-                "</b> успешно изменено на <b>" + category.getName() + "</b>", keyBoard.categoryMenuKeyboard(), true);
-        categoryMap.remove(chatId);
-        statusMessageMap.remove(chatId);
+        log.info("putCategoryName: chatId - {}, messageText - {}", chatId, messageText);
+        sendMessage(categoryMessageComposer.putCategoryName(chatId, messageText));
         getAllCategoryForUser(chatId);
     }
 
-    private void editCategoryName(long chatId, String messageText) {
-        if (StatusMessage.WAITING_ID_CATEGORY_TO_EDIT_NAME.equals(statusMessageMap.get(chatId))) {
-            try {
-                Long categoryId = Long.valueOf(messageText);
-                if (categoryService.getCustomCategoryByUser_Id(chatId).contains(categoryId)) {
-                    Category category = categoryService.getCategoryById(categoryId);
-                    categoryMap.put(chatId, category);
-                    sendMessage(chatId, "Категория  с ID: <b>" + category.getId() + "</b> и именем: <b>"
-                                    + category.getName() + "</b> успешно найдена.\n" +
-                                    "Введи новое имя для этой категории",
-                            keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                    statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_CATEGORY_TO_EDIT_NAME);
-                } else {
-                    sendMessage(chatId, "Введенная категория с ID: " + messageText +
-                            " не является твоей категорией. Повтори ввод");
-                }
-            } catch (NumberFormatException e) {
-                sendMessage(chatId, "ID категории состоит только из цифр. Твой <b>ID: " + messageText +
-                                "</b> не из цифр!\n " + "Повтори ввод ID",
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-            }
-
-        } else {
-            try {
-                sendMessage(chatId, "Введи ID категории для редактирования. " +
-                                "Ниже список доступных для редактирования категорий:\n" +
-                                categoryService.getAllCategoryToEditNameForUser(chatId),
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                statusMessageMap.put(chatId, StatusMessage.WAITING_ID_CATEGORY_TO_EDIT_NAME);
-            } catch (RuntimeException e) {
-                sendMessage(chatId, "Нет доступных категорий для редактирования.",
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-            }
-        }
-    }
-
     private void deleteCategory(long chatId, String messageText) {
-        if (StatusMessage.WAITING_ID_CATEGORY_TO_DELETE.equals(statusMessageMap.get(chatId))) {
-            try {
-                if (categoryService.checkCategoryToDeleteForUser(chatId, messageText)) {
-                    Category category = categoryService.deleteCategoryById(Long.valueOf(messageText));
-                    sendMessage(chatId, "Категория с ID " + category.getId() + " удалена",
-                            keyBoard.backToStartAndCategoryMenuKeyboard());
-                    sendMessage(chatId, "Полный список Ваших категорий. \n" +
-                                    categoryService.getAllCategoryForUser(chatId),
-                            keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                    statusMessageMap.remove(chatId);
-                } else {
-                    sendMessage(chatId, "Введенная категория с ID: " + messageText + " не является Вашей категорией. Повторите ввод");
-                }
-            } catch (NumberFormatException e) {
-                sendMessage(chatId, "Ошибка. Вы ввели не цифру для идентификации категории. Повторите ввод.");
-            }
-        } else {
-            try {
-                sendMessage(chatId, "Удалить можно только те категории, в которых нет привязанных расходов. " +
-                        "Также нельзя удалить категории по умолчанию. \n" +
-                        "Введите в следующем сообщении ID категории, которую хотите удалить.", keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                categoryService.getAllCategoryToDeleteForUser(chatId);
-                sendMessage(chatId, "Ниже список доступных  категорий:\n" +
-                        categoryService.getAllCategoryToDeleteForUser(chatId), keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                statusMessageMap.put(chatId, StatusMessage.WAITING_ID_CATEGORY_TO_DELETE);
-            } catch (RuntimeException e) {
-                sendMessage(chatId, "Нет доступных категорий для удаления",
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-            }
-        }
-
+        log.info("класс TelegramBotHandler, метод deleteCategory, chatId - {}, messageText - {}",
+                chatId, messageText);
+            sendMessage(categoryMessageComposer.deleteCategory(chatId, messageText));
     }
 
     private void deleteAllExpenseByUser(long chatId, String messageText) {
@@ -602,21 +527,9 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         sendMessage(chatId, expenseService.findExpenseForToDayByChatId(chatId), keyBoard.startExpenseKeyboard(), true);
     }
 
-    private void putCategory(long chatId, String messageText) {
-        categoryService.addCategory(chatId, messageText);
-        sendMessage(chatId, "Категория " + messageText + " добавлена", keyBoard.backToStartAndCategoryMenuKeyboard());
-        sendMessage(chatId, "Полный список Ваших категорий. \n" +
-                categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-        statusMessageMap.remove(chatId);
-    }
-
     private void addCategory(long chatId, String messageText) {
-        if (StatusMessage.WAITING_CATEGORY.equals(statusMessageMap.get(chatId))) {
-            putCategory(chatId, messageText);
-        } else {
-            sendMessage(chatId, "Введите название категории", keyBoard.backToStartAndCategoryMenuKeyboard());
-            statusMessageMap.put(chatId, StatusMessage.WAITING_CATEGORY);
-        }
+        log.info("addCategory, chatId - {}, messageText - {}", chatId, messageText);
+       sendMessage(categoryMessageComposer.addCategory(chatId, messageText));
     }
 
     private void putExpense(long chatId, String messageText) {
@@ -651,7 +564,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
             System.out.println(user + " успешно добавлен в бд");
             sendMessage(chatId, "\uD83D\uDC4B Привет " + name + ", приятно познакомиться",
                     keyBoard.startKeyboard());
-            sendMessage(chatId, INFO, keyBoard.startKeyboard());
+            sendMessage(chatId, info, keyBoard.startKeyboard());
         } else {
             System.out.println("Пользователь уже был в базе");
         }

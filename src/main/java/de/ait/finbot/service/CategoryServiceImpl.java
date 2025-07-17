@@ -44,6 +44,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryMapper.StringNameToCategory(chatId, name);
         log.info(category.toString());
         categoryRepository.save(category);
+        log.info("класс CategoryServiceImpl, метод addCategory, категория - {} добавлена в бд", category);
         return category;
     }
 
