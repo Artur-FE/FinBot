@@ -1,5 +1,6 @@
 package de.ait.finbot.composer;
 
+import de.ait.finbot.config.CategoryMap;
 import de.ait.finbot.config.KeyBoard;
 import de.ait.finbot.config.StatusMessage;
 import de.ait.finbot.config.StatusMessageMap;
@@ -18,6 +19,7 @@ public class CategoryMessageComposer {
     private final CategoryService categoryService;
     private final KeyBoard keyBoard;
     private final StatusMessageMap statusMessageMap;
+    private final CategoryMap categoryMap;
 //    @Lazy
 //    private final TelegramBotHandler telegramBotHandler;
 
@@ -116,5 +118,57 @@ public class CategoryMessageComposer {
             }
         }
 
+    }
+
+    public MessageObj editCategoryName(long chatId, String messageText) {
+        if (StatusMessage.WAITING_ID_CATEGORY_TO_EDIT_NAME.equals(statusMessageMap.get(chatId))) {
+            try {
+                Long categoryId = Long.valueOf(messageText);
+                if (categoryService.getCustomCategoryByUser_Id(chatId).contains(categoryId)) {
+                    Category category = categoryService.getCategoryById(categoryId);
+                    categoryMap.put(chatId, category);
+                    statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_CATEGORY_TO_EDIT_NAME);
+                    log.info("Категория найдена - {}", category);
+                    return new MessageObj(chatId, "Категория  с ID: <b>" + category.getId() + "</b> и именем: <b>"
+                            + category.getName() + "</b> успешно найдена.\n" +
+                            "Введи новое имя для этой категории",
+                            keyBoard.backToStartAndCategoryMenuKeyboard(), true);
+                } else {
+                    log.info("Категория ID - {} не принадлежит user {} или является общей категорией", messageText, chatId);
+                    return new MessageObj(chatId, "Введенная категория с ID: " + messageText +
+                            " не является твоей категорией доступной для изменения. Повтори ввод",
+                            keyBoard.backToStartAndCategoryMenuKeyboard(), true);
+                }
+            } catch (NumberFormatException e) {
+                log.info("Невозможно преобразовать ввод пользователя в цифры. Сейчас передан ID - {}", messageText);
+                return new MessageObj(chatId, "ID категории состоит только из цифр. Твой <b>ID: " + messageText +
+                        "</b> не из цифр!\n " + "Повтори ввод ID",
+                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
+            }
+
+        } else {
+            try {
+                statusMessageMap.put(chatId, StatusMessage.WAITING_ID_CATEGORY_TO_EDIT_NAME);
+                log.info("Ожидание ввода от пользователя ID категории для редактирования");
+                return new MessageObj(chatId, "Введи ID категории для редактирования. " +
+                        "Ниже список доступных для редактирования категорий:\n" +
+                        categoryService.getAllCategoryToEditNameForUser(chatId),
+                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
+
+            } catch (RuntimeException e) {
+                log.info("Нет доступных категорий для редактирования у chatId - {}", chatId);
+                return new MessageObj(chatId, "Нет доступных категорий для редактирования.",
+                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
+            }
+        }
+    }
+
+    public MessageObj putCategoryName(long chatId, String messageText) {
+        Category category = categoryMap.get(chatId);
+        categoryService.editNameCategory(category, messageText);
+        categoryMap.remove(chatId);
+        statusMessageMap.remove(chatId);
+        return new MessageObj(chatId, "Имя категории с <b>ID: " + category.getId() +
+                "</b> успешно изменено на <b>" + category.getName() + "</b>", keyBoard.categoryMenuKeyboard(), true);
     }
 }

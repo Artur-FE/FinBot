@@ -206,50 +206,15 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         System.out.println(expenseMap);
     }
 
-    private void putCategoryName(long chatId, String messageText) {
-        Category category = categoryMap.get(chatId);
-        categoryService.editNameCategory(category, messageText);
-        sendMessage(chatId, "Имя категории с <b>ID: " + category.getId() +
-                "</b> успешно изменено на <b>" + category.getName() + "</b>", keyBoard.categoryMenuKeyboard(), true);
-        categoryMap.remove(chatId);
-        statusMessageMap.remove(chatId);
-        getAllCategoryForUser(chatId);
+    private void editCategoryName(long chatId, String messageText) {
+        log.info("editCategoryName: chatId - {}, messageText - {}", chatId, messageText);
+       sendMessage(categoryMessageComposer.editCategoryName(chatId, messageText));
     }
 
-    private void editCategoryName(long chatId, String messageText) {
-        if (StatusMessage.WAITING_ID_CATEGORY_TO_EDIT_NAME.equals(statusMessageMap.get(chatId))) {
-            try {
-                Long categoryId = Long.valueOf(messageText);
-                if (categoryService.getCustomCategoryByUser_Id(chatId).contains(categoryId)) {
-                    Category category = categoryService.getCategoryById(categoryId);
-                    categoryMap.put(chatId, category);
-                    sendMessage(chatId, "Категория  с ID: <b>" + category.getId() + "</b> и именем: <b>"
-                                    + category.getName() + "</b> успешно найдена.\n" +
-                                    "Введи новое имя для этой категории",
-                            keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                    statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_CATEGORY_TO_EDIT_NAME);
-                } else {
-                    sendMessage(chatId, "Введенная категория с ID: " + messageText +
-                            " не является твоей категорией. Повтори ввод");
-                }
-            } catch (NumberFormatException e) {
-                sendMessage(chatId, "ID категории состоит только из цифр. Твой <b>ID: " + messageText +
-                                "</b> не из цифр!\n " + "Повтори ввод ID",
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-            }
-
-        } else {
-            try {
-                sendMessage(chatId, "Введи ID категории для редактирования. " +
-                                "Ниже список доступных для редактирования категорий:\n" +
-                                categoryService.getAllCategoryToEditNameForUser(chatId),
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-                statusMessageMap.put(chatId, StatusMessage.WAITING_ID_CATEGORY_TO_EDIT_NAME);
-            } catch (RuntimeException e) {
-                sendMessage(chatId, "Нет доступных категорий для редактирования.",
-                        keyBoard.backToStartAndCategoryMenuKeyboard(), true);
-            }
-        }
+    private void putCategoryName(long chatId, String messageText) {
+        log.info("putCategoryName: chatId - {}, messageText - {}", chatId, messageText);
+        sendMessage(categoryMessageComposer.putCategoryName(chatId, messageText));
+        getAllCategoryForUser(chatId);
     }
 
     private void deleteCategory(long chatId, String messageText) {
@@ -563,8 +528,7 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
     }
 
     private void addCategory(long chatId, String messageText) {
-        log.info("класс TelegramBotHandler, метод addCategory, chatId - {}, messageText - {}",
-                chatId, messageText);
+        log.info("addCategory, chatId - {}, messageText - {}", chatId, messageText);
        sendMessage(categoryMessageComposer.addCategory(chatId, messageText));
     }
 
