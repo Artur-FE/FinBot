@@ -249,226 +249,278 @@ public class TelegramBotHandler implements SpringLongPollingBot, LongPollingSing
         statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
     }
 
-    private void deleteExpenseByName(long chatId, String nameExpense) {
-        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
-                .stream()
-                .map(expense -> expenseMapper.expenseToExpenseString(expense))
-                .collect(Collectors.joining("\n"));
-        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
-                .stream()
-                .filter(expense -> expense.getNote().equalsIgnoreCase(nameExpense))
-                .toList();
+//    private void deleteExpenseByName(long chatId, String nameExpense) {
+//        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
+//                .stream()
+//                .map(expense -> expenseMapper.expenseToExpenseString(expense))
+//                .collect(Collectors.joining("\n"));
+//        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
+//                .stream()
+//                .filter(expense -> expense.getNote().equalsIgnoreCase(nameExpense))
+//                .toList();
+//
+//        if (listExpense.size() == 1) {
+//            Expense expense = listExpense.get(0);
+//            sendMessage(chatId, "Найден 1 расход с именем <b>" + nameExpense + "</b>\n" +
+//                    "Подтвердите в меню ниже процедуру удаления расхода \n\n" +
+//                    expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.deleteExpenseKeyboard(), true);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
+//            expenseMap.put(chatId, expense);
+//            System.out.println(expenseMap);
+//        } else if (!allExpenseByChatId.isBlank()) {
+//            sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
+//                    "Введите ID расхода для дальнейшего удаления \n\n" +
+//                    allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_DELETE);
+//        } else {
+//            sendMessage(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
+//                    "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.editExpenseKeyboard(), true);
+//        }
+//    }
 
-        if (listExpense.size() == 1) {
-            Expense expense = listExpense.get(0);
-            sendMessage(chatId, "Найден 1 расход с именем <b>" + nameExpense + "</b>\n" +
-                    "Подтвердите в меню ниже процедуру удаления расхода \n\n" +
-                    expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.deleteExpenseKeyboard(), true);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
-            expenseMap.put(chatId, expense);
-            System.out.println(expenseMap);
-        } else if (!allExpenseByChatId.isBlank()) {
-            sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
-                    "Введите ID расхода для дальнейшего удаления \n\n" +
-                    allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_DELETE);
-        } else {
-            sendMessage(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
-                    "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.editExpenseKeyboard(), true);
-        }
-    }
+//    private void waitingNameForExpenseToDelete(long chatId, String messageText) {
+//        if (StatusMessage.WAITING_NAME_TO_DELETE.equals(statusMessageMap.get(chatId))) {
+//            deleteExpenseByName(chatId, messageText);
+//            System.out.println("Блок if удалить по имени");
+//        } else {
+//            sendMessage(chatId, "Введите имя расхода для удаления. " +
+//                    "Вы получите список из расходов по введенному имени с указанием ID для дальнейшего удаления", true);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_TO_DELETE);
+//            System.out.println("Блок else удалить по имени");
+//        }
+//    }
 
     private void waitingNameForExpenseToDelete(long chatId, String messageText) {
-        if (StatusMessage.WAITING_NAME_TO_DELETE.equals(statusMessageMap.get(chatId))) {
-            deleteExpenseByName(chatId, messageText);
-            System.out.println("Блок if удалить по имени");
-        } else {
-            sendMessage(chatId, "Введите имя расхода для удаления. " +
-                    "Вы получите список из расходов по введенному имени с указанием ID для дальнейшего удаления", true);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_TO_DELETE);
-            System.out.println("Блок else удалить по имени");
-        }
+       sendMessage(expenseMessageComposer.waitingNameForExpenseToDelete(chatId, messageText));
     }
+
+//    private void findExpenseByName(long chatId, String nameExpense) {
+//        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
+//                .stream()
+//                .map(expense -> expenseMapper.expenseToExpenseString(expense))
+//                .collect(Collectors.joining("\n"));
+//        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
+//                .stream()
+//                .filter(expense -> expense.getNote().equalsIgnoreCase(nameExpense))
+//                .toList();
+//
+//        if (listExpense.size() == 1) {
+//            Expense expense = listExpense.get(0);
+//            sendMessage(chatId, "Найден 1 расход с именем <b>" + nameExpense + "</b>\n" +
+//                    "Выберите из меню ниже действия для дальнейшего редактирования \n\n" +
+//                    expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.editExpenseByIdKeyboard(), true);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
+//            expenseMap.put(chatId, expense);
+//        } else if (!allExpenseByChatId.isBlank()) {
+//            sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
+//                    "Введите ID расхода для дальнейшего редактирования \n\n" +
+//                    allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_EDIT);
+//        } else {
+//            System.out.println(allExpenseByChatId);
+//            sendMessage(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
+//                    "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        }
+//    }
 
     private void findExpenseByName(long chatId, String nameExpense) {
-        String allExpenseByChatId = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
-                .stream()
-                .map(expense -> expenseMapper.expenseToExpenseString(expense))
-                .collect(Collectors.joining("\n"));
-        List<Expense> listExpense = expenseService.findAllExpenseByNoteIgnoreCase(chatId, nameExpense)
-                .stream()
-                .filter(expense -> expense.getNote().equalsIgnoreCase(nameExpense))
-                .toList();
 
-        if (listExpense.size() == 1) {
-            Expense expense = listExpense.get(0);
-            sendMessage(chatId, "Найден 1 расход с именем <b>" + nameExpense + "</b>\n" +
-                    "Выберите из меню ниже действия для дальнейшего редактирования \n\n" +
-                    expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.editExpenseByIdKeyboard(), true);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
-            expenseMap.put(chatId, expense);
-        } else if (!allExpenseByChatId.isBlank()) {
-            sendMessage(chatId, "Найдено " + listExpense.size() + " расходов с именем " + nameExpense + "\n" +
-                    "Введите ID расхода для дальнейшего редактирования \n\n" +
-                    allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_EDIT);
-        } else {
-            System.out.println(allExpenseByChatId);
-            sendMessage(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
-                    "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        }
     }
+
+//    private void waitingNameForExpenseToEdit(long chatId, String messageText) {
+//        if (StatusMessage.WAITING_NAME_TO_EDIT.equals(statusMessageMap.get(chatId))) {
+//            findExpenseByName(chatId, messageText);
+//            System.out.println("поиск по имени блок if");
+//        } else {
+//            sendMessage(chatId, "Введите имя расхода для редактирования. " +
+//                    "Вы получите список из расходов по введенному имени с указанием ID для дальнейшего редактирования", true);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_TO_EDIT);
+//            System.out.println("поиск по имени блок else");
+//        }
+//    }
 
     private void waitingNameForExpenseToEdit(long chatId, String messageText) {
-        if (StatusMessage.WAITING_NAME_TO_EDIT.equals(statusMessageMap.get(chatId))) {
-            findExpenseByName(chatId, messageText);
-            System.out.println("поиск по имени блок if");
-        } else {
-            sendMessage(chatId, "Введите имя расхода для редактирования. " +
-                    "Вы получите список из расходов по введенному имени с указанием ID для дальнейшего редактирования", true);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_NAME_TO_EDIT);
-            System.out.println("поиск по имени блок else");
-        }
+       sendMessage(expenseMessageComposer.waitingNameForExpenseToEdit(chatId, messageText));
     }
+
+//    private void putNewCategoryExpenseById(long chatId, String categoryId) {
+//        Expense expense = null;
+//        // Long userId = 0L;
+//        try {
+//            expense = expenseMap.get(chatId);
+//            Category category = categoryService.getCategoryById(Long.valueOf(categoryId));
+//            expense.setCategory(category);
+//            expenseService.addExpense(expense);
+//            sendMessage(chatId, "Категория изменена успешно!\n" +
+//                            expenseMapper.expenseToExpenseStringAllField(expense),
+//                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//            expenseMap.remove(chatId);
+//            statusMessageMap.remove(chatId);
+//        } catch (NumberFormatException e) {
+//            sendMessage(chatId, "Ошибка! Введен некорретный ID <b>" + categoryId +
+//                    "</b>. Допустимы только цифры. Проверьте правильность написания", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//            log.error(String.valueOf(expense), categoryId);
+//        } catch (Exception e) {
+//            sendMessage(chatId, "Введенная категория с ID " + categoryId +
+//                    " не найдена. Введите ID категории из Вашего списка категорий ниже", true);
+//            sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
+//                    "\n" + categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//
+//            log.error(String.valueOf(expense), categoryId);
+//        }
+//
+//    }
 
     private void putNewCategoryExpenseById(long chatId, String categoryId) {
-        Expense expense = null;
-        // Long userId = 0L;
-        try {
-            expense = expenseMap.get(chatId);
-            Category category = categoryService.getCategoryById(Long.valueOf(categoryId));
-            expense.setCategory(category);
-            expenseService.addExpense(expense);
-            sendMessage(chatId, "Категория изменена успешно!\n" +
-                            expenseMapper.expenseToExpenseStringAllField(expense),
-                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-            expenseMap.remove(chatId);
-            statusMessageMap.remove(chatId);
-        } catch (NumberFormatException e) {
-            sendMessage(chatId, "Ошибка! Введен некорретный ID <b>" + categoryId +
-                    "</b>. Допустимы только цифры. Проверьте правильность написания", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-            log.error(String.valueOf(expense), categoryId);
-        } catch (Exception e) {
-            sendMessage(chatId, "Введенная категория с ID " + categoryId +
-                    " не найдена. Введите ID категории из Вашего списка категорий ниже", true);
-            sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
-                    "\n" + categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-
-            log.error(String.valueOf(expense), categoryId);
-        }
-
+        sendMessage(expenseMessageComposer.putNewCategoryExpenseById(chatId, categoryId));
     }
+
+//    private void editCategoryExpenseById(long chatId) {
+//        sendMessage(chatId, "Введите ID категории, которую хотите присвоить вашему расходу", keyBoard.backToStartAndExpenseMenuKeyboard());
+//        sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
+//                "\n" + categoryService.getAllCategoryForUser(chatId),
+//                keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_CATEGORY_EXPENSE);
+//    }
 
     private void editCategoryExpenseById(long chatId) {
-        sendMessage(chatId, "Введите ID категории, которую хотите присвоить вашему расходу", keyBoard.backToStartAndExpenseMenuKeyboard());
-        sendMessage(chatId, "Ниже представлен список Ваших категорий с указанием ID" +
-                "\n" + categoryService.getAllCategoryForUser(chatId), keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_CATEGORY_EXPENSE);
-
+       sendMessage(expenseMessageComposer.editCategoryExpenseById(chatId));
     }
+
+//    private void putNewDateExpenseById(long chatId, String newDate) {
+//        Expense expense = expenseMap.get(chatId);
+//        try {
+//            String date = newDate.replaceAll("[^0-9]", "");
+//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+//            LocalDateTime localDateTime = LocalDate.parse(date, formatter).atStartOfDay();
+//            expense.setCreatedAt(localDateTime);
+//            expenseService.addExpense(expense);
+//            expenseMap.remove(chatId);
+//            sendMessage(chatId, "Дата расхода успешно изменена!" + "\n" +
+//                            expenseMapper.expenseToExpenseStringAllField(expense),
+//                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//            statusMessageMap.remove(chatId);
+//        } catch (Exception e) {
+//            log.error(e.getMessage() + "Ошибка. Новая дата некорректна " + newDate);
+//            sendMessage(chatId, "Ошибка. Новая дата некорректная дата  " + newDate +
+//                    ". Пожалуйста, повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        }
+//    }
 
     private void putNewDateExpenseById(long chatId, String newDate) {
-        Expense expense = expenseMap.get(chatId);
-        try {
-            String date = newDate.replaceAll("[^0-9]", "");
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-            LocalDateTime localDateTime = LocalDate.parse(date, formatter).atStartOfDay();
-            expense.setCreatedAt(localDateTime);
-            expenseService.addExpense(expense);
-            expenseMap.remove(chatId);
-            sendMessage(chatId, "Дата расхода успешно изменена!" + "\n" +
-                            expenseMapper.expenseToExpenseStringAllField(expense),
-                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-            statusMessageMap.remove(chatId);
-        } catch (Exception e) {
-            log.error(e.getMessage() + "Ошибка. Новая дата некорректна " + newDate);
-            sendMessage(chatId, "Ошибка. Новая дата некорректная дата  " + newDate +
-                    ". Пожалуйста, повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        }
+        sendMessage(expenseMessageComposer.putNewDateExpenseById(chatId, newDate));
     }
+
+//    private void editDateExpenseById(long chatId) {
+//        sendMessage(chatId, "Введите новую дату расхода. " +
+//                "Формат день.месяц.год, например 27.05.2025 или 27052025");
+//        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_DATE_EXPENSE);
+//    }
 
     private void editDateExpenseById(long chatId) {
-        sendMessage(chatId, "Введите новую дату расхода. " +
-                "Формат день.месяц.год, например 27.05.2025 или 27052025");
-        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_DATE_EXPENSE);
+       sendMessage(expenseMessageComposer.editDateExpenseById(chatId));
     }
+
+//    private void putNewAmountExpenseById(long chatId, String newAmountExpense) {
+//        Expense expense = expenseMap.get(chatId);
+//        try {
+//            BigDecimal newAmountBigdecimal = new BigDecimal(newAmountExpense);
+//            expense.setAmount(newAmountBigdecimal);
+//            expenseService.addExpense(expense);
+//            expenseMap.remove(chatId);
+//            sendMessage(chatId, "Сумма расхода успешно изменена!" + "\n" +
+//                            expenseMapper.expenseToExpenseStringAllField(expense),
+//                    keyBoard.startKeyboard(), true);
+//            statusMessageMap.remove(chatId);
+//        } catch (NumberFormatException e) {
+//            log.error(e.getMessage() + "Ошибка. Новая сумма расхода отправленная пользователем не может " +
+//                    "быть преобразована в Bigdecimal " + newAmountExpense);
+//            sendMessage(chatId, "Введен некорретный расход. Проверьте правильность написания, " +
+//                    "допустимы только цифры и точка или запятая. Например 120 или 76.58. " +
+//                    "Пожалуйста, повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        }
+//
+//    }
 
     private void putNewAmountExpenseById(long chatId, String newAmountExpense) {
-        Expense expense = expenseMap.get(chatId);
-        try {
-            BigDecimal newAmountBigdecimal = new BigDecimal(newAmountExpense);
-            expense.setAmount(newAmountBigdecimal);
-            expenseService.addExpense(expense);
-            expenseMap.remove(chatId);
-            sendMessage(chatId, "Сумма расхода успешно изменена!" + "\n" +
-                            expenseMapper.expenseToExpenseStringAllField(expense),
-                    keyBoard.startKeyboard(), true);
-            statusMessageMap.remove(chatId);
-        } catch (NumberFormatException e) {
-            log.error(e.getMessage() + "Ошибка. Новая сумма расхода отправленная пользователем не может " +
-                    "быть преобразована в Bigdecimal " + newAmountExpense);
-            sendMessage(chatId, "Введен некорретный расход. Проверьте правильность написания, " +
-                    "допустимы только цифры и точка или запятая. Например 120 или 76.58. " +
-                    "Пожалуйста, повторите попытку", keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        }
-
+       sendMessage(expenseMessageComposer.putNewAmountExpenseById(chatId, newAmountExpense));
     }
+
+//    private void editAmountExpenseById(long chatId) {
+//        sendMessage(chatId, "Введите новую сумму расхода. " +
+//                "Допустимы только цифры и точка или запятая. Например 120 или 76.58");
+//        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_AMOUNT_EXPENSE);
+//    }
 
     private void editAmountExpenseById(long chatId) {
-        sendMessage(chatId, "Введите новую сумму расхода. " +
-                "Допустимы только цифры и точка или запятая. Например 120 или 76.58");
-        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_AMOUNT_EXPENSE);
+     sendMessage(expenseMessageComposer.editAmountExpenseById(chatId));
     }
+
+//    private void putNewNameExpenseById(long chatId, String newNameExpense) {
+//        Expense expense = expenseMap.get(chatId);
+//        expense.setNote(newNameExpense);
+//        expenseService.addExpense(expense);
+//        expenseMap.remove(chatId);
+//        sendMessage(chatId, "Имя расхода успешно изменено!" + "\n" + expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.startKeyboard(), true);
+//        statusMessageMap.remove(chatId);
+//    }
 
     private void putNewNameExpenseById(long chatId, String newNameExpense) {
-        Expense expense = expenseMap.get(chatId);
-        expense.setNote(newNameExpense);
-        expenseService.addExpense(expense);
-        expenseMap.remove(chatId);
-        sendMessage(chatId, "Имя расхода успешно изменено!" + "\n" + expenseMapper.expenseToExpenseStringAllField(expense), keyBoard.startKeyboard(), true);
-        statusMessageMap.remove(chatId);
+        sendMessage(expenseMessageComposer.putNewNameExpenseById(chatId, newNameExpense));
     }
+
+//    private void editNameExpenseById(long chatId) {
+//        sendMessage(chatId, "Введите новое название расхода");
+//        statusMessageMap.remove(chatId);
+//        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_NAME_EXPENSE);
+//    }
 
     private void editNameExpenseById(long chatId) {
-        sendMessage(chatId, "Введите новое название расхода");
-        statusMessageMap.remove(chatId);
-        statusMessageMap.put(chatId, StatusMessage.PUT_NEW_NAME_EXPENSE);
+        sendMessage(expenseMessageComposer.editNameExpenseById(chatId));
     }
 
-    private void editExpenseById(long chatId, String idExpenseString) {
-        Long idExpense = null;
-        try {
-            idExpense = Long.valueOf(idExpenseString);
-            User user = userService.getUserByChatId(chatId);
-            Expense expense = expenseService.findExpenseById(chatId, idExpense);
-            expenseMap.put(chatId, expense);
-            sendMessage(chatId, "Найден расход: \n" +
-                            expenseMapper.expenseToExpenseStringAllField(expense),
-                    keyBoard.editExpenseByIdKeyboard(), true);
-            statusMessageMap.remove(chatId);
-            statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
+//    private void editExpenseById(long chatId, String idExpenseString) {
+//        Long idExpense = null;
+//        try {
+//            idExpense = Long.valueOf(idExpenseString);
+//            User user = userService.getUserByChatId(chatId);
+//            Expense expense = expenseService.findExpenseById(chatId, idExpense);
+//            expenseMap.put(chatId, expense);
+//            sendMessage(chatId, "Найден расход: \n" +
+//                            expenseMapper.expenseToExpenseStringAllField(expense),
+//                    keyBoard.editExpenseByIdKeyboard(), true);
+//            statusMessageMap.remove(chatId);
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
+//
+//        } catch (NumberFormatException e) {
+//            sendMessage(chatId, "Передан некорректный ID. " + idExpenseString +
+//                            "Вводите только цифры, например 15. Попробуйте еще раз!",
+//                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        } catch (Exception e) {
+//            sendMessage(chatId, "Расход с ID: <b>" + idExpenseString + " </b> не найден. " +
+//                            "Проверьте правильность введения и повторите попытку",
+//                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+//        }
+//    }
 
-        } catch (NumberFormatException e) {
-            sendMessage(chatId, "Передан некорректный ID. " + idExpenseString +
-                            "Вводите только цифры, например 15. Попробуйте еще раз!",
-                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        } catch (Exception e) {
-            sendMessage(chatId, "Расход с ID: <b>" + idExpenseString + " </b> не найден. " +
-                            "Проверьте правильность введения и повторите попытку",
-                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
-        }
-    }
+//    private void editExpenseById(long chatId, String idExpenseString) {
+//
+//    }
+
+//    private void waitingIDForExpenseToEdit(long chatId, String messageText) {
+//        if (StatusMessage.WAITING_ID_TO_EDIT.equals(statusMessageMap.get(chatId))) {
+//            editExpenseById(chatId, messageText);
+//            System.out.println("рефактор успешен блок if");
+//        } else {
+//            sendMessage(chatId, "Введите ID расхода для редактирования");
+//            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_EDIT);
+//            System.out.println("рефактор успешен блок else");
+//        }
+//
+//    }
 
     private void waitingIDForExpenseToEdit(long chatId, String messageText) {
-        if (StatusMessage.WAITING_ID_TO_EDIT.equals(statusMessageMap.get(chatId))) {
-            editExpenseById(chatId, messageText);
-            System.out.println("рефактор успешен блок if");
-        } else {
-            sendMessage(chatId, "Введите ID расхода для редактирования");
-            statusMessageMap.put(chatId, StatusMessage.WAITING_ID_TO_EDIT);
-            System.out.println("рефактор успешен блок else");
-        }
-
+        sendMessage(expenseMessageComposer.waitingIDForExpenseToEdit(chatId,messageText));
     }
 
 //    private void deleteExpenseById(long chatId, String idExpenseString) {
