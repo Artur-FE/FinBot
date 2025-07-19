@@ -146,12 +146,12 @@ public class ExpenseMessageComposer {
 
 
         } catch (NumberFormatException e) {
-            log.info("editExpenseById: Ошибка NumberFormatException! Передан некорректный ID - {} для chatId - {}", idExpenseString, chatId);
+            log.error("editExpenseById: Ошибка NumberFormatException! Передан некорректный ID - {} для chatId - {}", idExpenseString, chatId);
             return new MessageObj(chatId, "Передан некорректный ID. " + idExpenseString +
                     "Вводите только цифры, например 15. Попробуйте еще раз!",
                     keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         } catch (Exception e) {
-            log.info("editExpenseById: Ошибка Exception! Расход с ID - {} для chatId - {} не найден", idExpenseString, chatId);
+            log.error("editExpenseById: Ошибка Exception! Расход с ID - {} для chatId - {} не найден", idExpenseString, chatId);
             return new MessageObj(chatId, "Расход с ID: <b>" + idExpenseString + " </b> не найден. " +
                     "Проверьте правильность введения и повторите попытку",
                     keyBoard.backToStartAndExpenseMenuKeyboard(), true);
@@ -377,8 +377,40 @@ public class ExpenseMessageComposer {
                     "Введите ID расхода для дальнейшего удаления \n\n" +
                     allExpenseByChatId, keyBoard.backToStartAndExpenseMenuKeyboard(), true);
         } else {
+            log.error("Ошибка! Расход с именем - {} для chatId - {} не найден", nameExpense, chatId);
             return new MessageObj(chatId, "По имени расхода <b>" + nameExpense + "</b> нет результатов. \n" +
                     "Проверьте правильность введения имени расхода и повторите попытку", keyBoard.editExpenseKeyboard(), true);
         }
     }
+
+    public MessageObj searchExpense(long chatId) {
+        statusMessageMap.put(chatId, StatusMessage.WAITING_WHAT_EXPENSE_TO_EDIT);
+        log.info("searchExpense: chatId - {}", chatId);
+        return new MessageObj(chatId, "Как ты хочешь найти расход, по имени расхода или ID? Выбери в меню ниже",
+                keyBoard.searchExpenseKeyboard(), true);
+
+    }
+
+    public MessageObj deleteAllExpenseByUser(long chatId, String messageText) {
+        log.info("deleteAllExpenseByUser: chatId- {}, messageText - {}", chatId, messageText);
+        if (messageText.equals(IncomingMessage.DELETE_ALL_EXPENSES.getDescription())) {
+            return new MessageObj(chatId, "Вы уверенны, что хотите удалить все свои расходы? Действие невозможно восстановить",
+                    keyBoard.deleteAllExpenseMenuKeyboard(), true);
+        } else if (messageText.equals(IncomingMessage.SURE_DELETE_ALL_EXPENSES.getDescription())) {
+            try {
+                expenseService.removeAllExpenseByUser(chatId);
+                return new MessageObj(chatId, "Удаление успешно! \n" +
+                                expenseService.findAllExpenseByChatId(chatId),
+                        keyBoard.startKeyboard(), true);
+            } catch (Exception e) {
+                return new MessageObj(chatId, "Ошибка! Что-то пошло не так! Попробуйте вернуться в главное меню и повторить попытку",
+                        keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+            }
+        }
+        else
+            return new MessageObj(chatId, "Ошибка! Удаление невозможно",
+                    keyBoard.backToStartAndExpenseMenuKeyboard(), true);
+    }
+
+
 }
